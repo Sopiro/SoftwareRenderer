@@ -22,6 +22,45 @@ let view;
 
 let FOV = 70
 
+// NOTICE 2020-04-18
+// Please see the comments below about why this is not a great PRNG.
+
+// Read summary by @bryc here:
+// https://github.com/bryc/code/blob/master/jshash/PRNGs.md
+
+// Have a look at js-arbit which uses Alea:
+// https://github.com/blixt/js-arbit
+
+/**
+ * Creates a pseudo-random value generator. The seed must be an integer.
+ *
+ * Uses an optimized version of the Park-Miller PRNG.
+ * http://www.firstpr.com.au/dsp/rand31/
+ */
+function Random(seed)
+{
+    this._seed = seed % 2147483647;
+    if (this._seed <= 0) this._seed += 2147483646;
+}
+
+/**
+ * Returns a pseudo-random value between 1 and 2^32 - 2.
+ */
+Random.prototype.next = function ()
+{
+    return this._seed = this._seed * 16807 % 2147483647;
+};
+
+
+/**
+ * Returns a pseudo-random floating point number in range [0, 1).
+ */
+Random.prototype.nextFloat = function (opt_minOrMax, opt_max)
+{
+    // We know that result of next() will be 1 to 2147483646 (inclusive).
+    return (this.next() - 1) / 2147483646;
+};
+
 class Bitmap
 {
     constructor(width, height)
@@ -78,9 +117,11 @@ class View extends Bitmap
         this.rotX = Math.cos(time) * 30;
         this.rotY = Math.sin(time) * 30;
 
+        let r = new Random(123);
+
         for (let i = 0; i < 1000; i++)
         {
-            this.renderPoint(Math.random() * 1 - 0.5, Math.random() * 1 - 0.5, 1);
+            this.renderPoint(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 1);
         }
 
         // this.renderPoint(10, 10, 2);

@@ -8,8 +8,6 @@ let msPerFrame = 1000.0 / 60.0;
 let timer = 0;
 let frameCounter = 0;
 
-let view;
-
 let cvs;
 let gfx;
 
@@ -20,6 +18,9 @@ let globalAlpha = 255;
 let pause = false
 let time = 0;
 
+let view;
+
+let FOV = 70
 
 class Bitmap
 {
@@ -43,15 +44,75 @@ class Bitmap
                 if (xx < 0 || xx >= this.width)
                     continue;
 
-                this.pixels[xx + yy * this.width] = bitmap[x + y * bitmap.width];
+                let color = bitmap.pixels[x + y * bitmap.width];
+
+                this.pixels[xx + yy * this.width] = color;
             }
+        }
+    }
+
+    clear(color)
+    {
+        for (let i = 0; i < this.pixels.length; i++)
+        {
+            this.pixels[i] = color;
         }
     }
 }
 
 class View extends Bitmap
 {
+    constructor(width, height)
+    {
+        super(width, height);
 
+        this.px = 0.0;
+        this.py = 0.0;
+        this.pz = 0.0;
+        this.rotX = 0.0;
+        this.rotY = 0.0;
+    }
+
+    renderPerspective()
+    {
+        this.rotX = Math.cos(time) * 30;
+        this.rotY = Math.sin(time) * 30;
+
+        for (let i = 0; i < 1000; i++)
+        {
+            this.renderPoint(Math.random() * 1 - 0.5, Math.random() * 1 - 0.5, 1);
+        }
+
+        // this.renderPoint(10, 10, 2);
+    }
+
+    renderPoint(ox, oy, oz)
+    {
+        let sinX = Math.sin(this.rotX * Math.PI / 180.0);
+        let cosX = Math.cos(this.rotX * Math.PI / 180.0);
+        let sinY = Math.sin(this.rotY * Math.PI / 180.0);
+        let cosY = Math.cos(this.rotY * Math.PI / 180.0);
+
+        let x = this.px + ox;
+        let y = this.py + oy;
+        let z = this.pz + oz;
+
+        x = cosY * x + sinY * z;
+        y = sinX * sinY * x + cosX * y - sinX * sinY * z;
+        z = -cosX * sinY * x + sinX * y + cosX * cosY * z;
+
+        if (z < 0) return;
+
+        let xx = Math.floor((x * FOV / z + WIDTH / 2.0));
+        let yy = Math.floor((y * FOV / z + HEIGHT / 2.0));
+
+        if (xx < 0 || xx >= this.width || yy < 0 || yy >= this.height)
+            return;
+
+        this.pixels[xx + yy * this.width] = 0xff00ff;
+
+        // this.pixels[0] = 0xffffff;
+    }
 }
 
 function start()
@@ -120,17 +181,17 @@ function run()
 
 function update(delta)
 {
-    for (let i = 0; i < view.pixels.length; i++)
-    {
-        view.pixels[i] = Math.random() * 0xffffff;
-    }
+    // for (let i = 0; i < view.pixels.length; i++)
+    // {
+    //     view.pixels[i] = Math.random() * 0xffffff;
+    // }
 }
 
 function render()
 {
-    let b = new Bitmap(10, 10);
+    view.clear(0x000000);
 
-    view.render(b, Math.floor(time * 10.0), 10);
+    view.renderPerspective();
 
     gfx.putImageData(convert(view, SCALE), 0, 0);
 }

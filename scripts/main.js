@@ -1,5 +1,5 @@
 let WIDTH = 800;
-let HEIGHT = 600;
+let HEIGHT = WIDTH / 4 * 3;
 let SCALE = 4;
 
 let previousTime = 0;
@@ -20,16 +20,12 @@ let time = 0;
 
 let view;
 
-let FOV = 70
+let keys = { up: false, down: false, left: false, right: false, q: false, e: false };
+let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0.0, dy: 0.0 };
 
-// NOTICE 2020-04-18
-// Please see the comments below about why this is not a great PRNG.
+let player;
 
-// Read summary by @bryc here:
-// https://github.com/bryc/code/blob/master/jshash/PRNGs.md
-
-// Have a look at js-arbit which uses Alea:
-// https://github.com/blixt/js-arbit
+let FOV = HEIGHT / SCALE
 
 /**
  * Creates a pseudo-random value generator. The seed must be an integer.
@@ -60,6 +56,64 @@ Random.prototype.nextFloat = function (opt_minOrMax, opt_max)
     // We know that result of next() will be 1 to 2147483646 (inclusive).
     return (this.next() - 1) / 2147483646;
 };
+
+class Player
+{
+    constructor()
+    {
+        this.speed = 3.0;
+        this.rotSpeed = 60.0;
+
+        this.x = 0.0;
+        this.y = 0.0;
+        this.z = 0.0;
+
+        this.rotX = 0.0;
+        this.rotY = 0.0;
+        this.rotZ = 0.0;
+
+        this.sinX = 0.0;
+        this.sinY = 0.0;
+        this.cosX = 0.0;
+        this.cosY = 0.0;
+        this.sinZ = 0.0;
+        this.cosZ = 0.0;
+    }
+
+    update(delta)
+    {
+        this.sinX = Math.sin(-this.rotX * Math.PI / 180.0);
+        this.cosX = Math.cos(-this.rotX * Math.PI / 180.0);
+        this.sinY = Math.sin(-this.rotY * Math.PI / 180.0);
+        this.cosY = Math.cos(-this.rotY * Math.PI / 180.0);
+        this.sinZ = Math.sin(-this.rotZ * Math.PI / 180.0);
+        this.cosZ = Math.cos(-this.rotZ * Math.PI / 180.0);
+
+        // Right hand coordinate system
+
+        let ax = 0.0;
+        let az = 0.0;
+
+        if (keys.left) ax--;
+        if (keys.right) ax++;
+        if (keys.up) az--;
+        if (keys.down) az++;
+
+        this.x += (this.cosY * ax + this.sinY * az) * this.speed * delta;
+        this.z += (-this.sinY * ax + this.cosY * az) * this.speed * delta;
+
+        if (keys.space) this.y += this.speed * delta;
+        if (keys.ctrl) this.y -= this.speed * delta;
+        if (keys.q) this.rotY -= this.rotSpeed * delta;
+        if (keys.e) this.rotY += this.rotSpeed * delta;
+
+        if (mouse.down)
+        {
+            this.rotY += mouse.dx * 0.1 * this.rotSpeed * delta;
+            this.rotX -= mouse.dy * 0.1 * this.rotSpeed * delta;
+        }
+    }
+}
 
 class Bitmap
 {
@@ -104,53 +158,49 @@ class View extends Bitmap
     constructor(width, height)
     {
         super(width, height);
+    }
 
-        this.px = 0.0;
-        this.py = 0.0;
-        this.pz = 0.0;
-        this.rotX = 0.0;
-        this.rotY = 0.0;
+    update(delta)
+    {
+
     }
 
     renderPerspective()
     {
-        this.rotX = Math.cos(time) * 30;
-        this.rotY = Math.sin(time) * 30;
-
         let r = new Random(123);
 
         for (let i = 0; i < 1000; i++)
         {
-            this.renderPoint(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 1);
+            this.renderPoint(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -2, r.nextFloat() * 0xffffff);
         }
 
-        // this.renderPoint(10, 10, 2);
+        this.renderPoint(3, 0, 3, 0x000000);
+        this.renderPoint(-3, 0, 3, 0xff0000);
+        this.renderPoint(3, 0, -3, 0x00ff00);
+        this.renderPoint(-3, 0, -3, 0x0000ff);
     }
 
-    renderPoint(ox, oy, oz)
+    renderPoint(x, y, z, color)
     {
-        let sinX = Math.sin(this.rotX * Math.PI / 180.0);
-        let cosX = Math.cos(this.rotX * Math.PI / 180.0);
-        let sinY = Math.sin(this.rotY * Math.PI / 180.0);
-        let cosY = Math.cos(this.rotY * Math.PI / 180.0);
+        if (color == undefined) color = 0xff00ff;
 
-        let x = this.px + ox;
-        let y = this.py + oy;
-        let z = this.pz + oz;
+        let ox = x - player.x;
+        let oy = y + player.y;
+        let oz = -z + player.z;
 
-        x = cosY * x + sinY * z;
-        y = sinX * sinY * x + cosX * y - sinX * sinY * z;
-        z = -cosX * sinY * x + sinX * y + cosX * cosY * z;
+        // Combined XYZ Rotation
+        let xx = ox * (+player.cosY * player.cosZ) + oy * (-player.cosY * player.sinZ) + oz * (+player.sinY);
+        let yy = ox * (+player.sinX * player.sinY * player.cosZ + player.cosX * player.sinZ) + oy * (-player.sinX * player.sinY * player.sinZ + player.cosX * player.cosZ) + oz * (-player.sinX * player.cosY);
+        let zz = ox * (-player.cosX * player.sinY * player.cosZ + player.sinX * player.sinZ) + oy * (+player.cosX * player.sinY * player.sinZ + player.sinX * player.cosZ) + oz * (+player.cosX * player.cosY);
 
-        if (z < 0) return;
+        if (zz < 0) return;
 
-        let xx = Math.floor((x * FOV / z + WIDTH / 2.0));
-        let yy = Math.floor((y * FOV / z + HEIGHT / 2.0));
+        let sx = Math.floor((xx * FOV / zz + WIDTH / 2.0));
+        let sy = Math.floor((yy * FOV / zz + HEIGHT / 2.0));
 
-        if (xx < 0 || xx >= this.width || yy < 0 || yy >= this.height)
-            return;
+        if (sx < 0 || sx >= this.width || sy < 0 || sy >= this.height) return;
 
-        this.pixels[xx + yy * this.width] = 0xff00ff;
+        this.pixels[sx + sy * this.width] = color;
 
         // this.pixels[0] = 0xffffff;
     }
@@ -169,10 +219,51 @@ function init()
     cvs.setAttribute("height", HEIGHT + "px");
     gfx = cvs.getContext("2d");
 
-    window.addEventListener("click", function ()
+    window.addEventListener("mousedown", (e) =>
     {
-        pause = !pause;
+        if (e.button != 0) return;
+
+        mouse.down = true;
     }, false);
+    window.addEventListener("mouseup", (e) =>
+    {
+        if (e.button != 0) return;
+
+        mouse.down = false;
+    }, false);
+
+    window.addEventListener("keydown", (e) =>
+    {
+        if (e.key == "Escape")
+            pause = !pause;
+
+        if (e.key == "w" || e.key == "ArrowUp") keys.up = true;
+        if (e.key == "a" || e.key == "ArrowLeft") keys.left = true;
+        if (e.key == "s" || e.key == "ArrowDown") keys.down = true;
+        if (e.key == "d" || e.key == "ArrowRight") keys.right = true;
+        if (e.key == " ") keys.space = true;
+        if (e.key == "Control") keys.ctrl = true;
+        if (e.key == "q") keys.q = true;
+        if (e.key == "e") keys.e = true;
+    });
+
+    window.addEventListener("keyup", (e) =>
+    {
+        if (e.key == "w" || e.key == "ArrowUp") keys.up = false;
+        if (e.key == "a" || e.key == "ArrowLeft") keys.left = false;
+        if (e.key == "s" || e.key == "ArrowDown") keys.down = false;
+        if (e.key == "d" || e.key == "ArrowRight") keys.right = false;
+        if (e.key == " ") keys.space = false;
+        if (e.key == "Control") keys.ctrl = false;
+        if (e.key == "q") keys.q = false;
+        if (e.key == "e") keys.e = false;
+    });
+
+    window.addEventListener("mousemove", (e) =>
+    {
+        mouse.currX = e.screenX;
+        mouse.currY = e.screenY;
+    });
 
     frameCounterElement = document.getElementById("frame_counter");
 
@@ -184,9 +275,9 @@ function init()
     view = new View(WIDTH, HEIGHT);
 
     for (let i = 0; i < WIDTH * HEIGHT; i++)
-    {
         view.pixels[i] = Math.random() * 0xffffff;
-    }
+
+    player = new Player();
 }
 
 function run()
@@ -199,7 +290,7 @@ function run()
     {
         if (!pause)
         {
-            update(passedTime);
+            update(passedTime / 1000.0);
             render();
             time += passedTime / 1000.0;
 
@@ -222,15 +313,18 @@ function run()
 
 function update(delta)
 {
-    // for (let i = 0; i < view.pixels.length; i++)
-    // {
-    //     view.pixels[i] = Math.random() * 0xffffff;
-    // }
+    mouse.dx = mouse.currX - mouse.lastX;
+    mouse.dy = mouse.currY - mouse.lastY;
+    mouse.lastX = mouse.currX;
+    mouse.lastY = mouse.currY;
+
+    player.update(delta);
+    view.update(delta);
 }
 
 function render()
 {
-    view.clear(0x000000);
+    view.clear(0x808080);
 
     view.renderPerspective();
 

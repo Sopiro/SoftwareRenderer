@@ -57,6 +57,16 @@ Random.prototype.nextFloat = function (opt_minOrMax, opt_max)
     return (this.next() - 1) / 2147483646;
 };
 
+class Vertex
+{
+    constructor(x, y, z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
+
 class Player
 {
     constructor()
@@ -64,30 +74,20 @@ class Player
         this.speed = 3.0;
         this.rotSpeed = 60.0;
 
-        this.x = 0.0;
-        this.y = 0.0;
-        this.z = 0.0;
+        this.x = 0.0; this.y = 0.0; this.z = 0.0;
 
-        this.rotX = 0.0;
-        this.rotY = 0.0;
-        this.rotZ = 0.0;
+        this.rotX = 0.0; this.rotY = 0.0; this.rotZ = 0.0;
 
-        this.sinX = 0.0;
-        this.sinY = 0.0;
-        this.cosX = 0.0;
-        this.cosY = 0.0;
-        this.sinZ = 0.0;
-        this.cosZ = 0.0;
+        this.sinX = 0.0; this.cosX = 0.0;
+        this.sinY = 0.0; this.cosY = 0.0;
+        this.sinZ = 0.0; this.cosZ = 0.0;
     }
 
     update(delta)
     {
-        this.sinX = Math.sin(-this.rotX * Math.PI / 180.0);
-        this.cosX = Math.cos(-this.rotX * Math.PI / 180.0);
-        this.sinY = Math.sin(-this.rotY * Math.PI / 180.0);
-        this.cosY = Math.cos(-this.rotY * Math.PI / 180.0);
-        this.sinZ = Math.sin(-this.rotZ * Math.PI / 180.0);
-        this.cosZ = Math.cos(-this.rotZ * Math.PI / 180.0);
+        this.sinX = Math.sin(-this.rotX * Math.PI / 180.0); this.cosX = Math.cos(-this.rotX * Math.PI / 180.0);
+        this.sinY = Math.sin(-this.rotY * Math.PI / 180.0); this.cosY = Math.cos(-this.rotY * Math.PI / 180.0);
+        this.sinZ = Math.sin(-this.rotZ * Math.PI / 180.0); this.cosZ = Math.cos(-this.rotZ * Math.PI / 180.0);
 
         // Right hand coordinate system
 
@@ -178,31 +178,59 @@ class View extends Bitmap
         this.renderPoint(-3, 0, 3, 0xff0000);
         this.renderPoint(3, 0, -3, 0x00ff00);
         this.renderPoint(-3, 0, -3, 0x0000ff);
+
     }
 
     renderPoint(x, y, z, color)
     {
         if (color == undefined) color = 0xff00ff;
 
-        let ox = x - player.x;
-        let oy = y + player.y;
-        let oz = -z + player.z;
+        let p = this.playerTransform(new Vertex(x, y, z));
+
+        let sp = this.convertIntoScreenSpace(p);
+
+        if (sp != undefined)
+            this.renderPixel(sp, color);
+    }
+
+    drawLine(x0, y0, z0, x1, y1, z1, color)
+    {
+        if (color == undefined) color = 0xff00ff;
+
+        p0 = this.playerTransform(x0, y0, z0);
+        p1 = this.playerTransform(x1, y1, z1);
+    }
+
+    playerTransform(p)
+    {
+        let ox = p.x - player.x;
+        let oy = p.y + player.y;
+        let oz = -p.z + player.z;
 
         // Combined XYZ Rotation
         let xx = ox * (+player.cosY * player.cosZ) + oy * (-player.cosY * player.sinZ) + oz * (+player.sinY);
         let yy = ox * (+player.sinX * player.sinY * player.cosZ + player.cosX * player.sinZ) + oy * (-player.sinX * player.sinY * player.sinZ + player.cosX * player.cosZ) + oz * (-player.sinX * player.cosY);
         let zz = ox * (-player.cosX * player.sinY * player.cosZ + player.sinX * player.sinZ) + oy * (+player.cosX * player.sinY * player.sinZ + player.sinX * player.cosZ) + oz * (+player.cosX * player.cosY);
 
-        if (zz < 0) return;
+        return { x: xx, y: yy, z: zz }
+    }
 
-        let sx = Math.floor((xx * FOV / zz + WIDTH / 2.0));
-        let sy = Math.floor((yy * FOV / zz + HEIGHT / 2.0));
+    convertIntoScreenSpace(p)
+    {
+        if (p.z < 0) return undefined;
 
-        if (sx < 0 || sx >= this.width || sy < 0 || sy >= this.height) return;
+        let sx = Math.floor((p.x * FOV / p.z + WIDTH / 2.0));
+        let sy = Math.floor((p.y * FOV / p.z + HEIGHT / 2.0));
 
-        this.pixels[sx + sy * this.width] = color;
+        if (sx < 0 || sx >= this.width || sy < 0 || sy >= this.height)
+            return undefined;
+        else
+            return { x: sx, y: sy };
+    }
 
-        // this.pixels[0] = 0xffffff;
+    renderPixel(p, color)
+    {
+        this.pixels[p.x + p.y * this.width] = color;
     }
 }
 

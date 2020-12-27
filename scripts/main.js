@@ -216,7 +216,7 @@ class View extends Bitmap
 
         this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
 
-        this.drawLine(new Vertex(-3, 0, 1, 0xff0000), new Vertex(2, 0.5, 2, 0x00ff00));
+        this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
     }
 
     drawPoint(v)
@@ -553,7 +553,7 @@ function lerpColor(a, b, per)
     let lerpG = lerp(ag, bg, per);
     let lerpB = lerp(ab, bb, per);
 
-    return lerpR << 16 | lerpG << 8 || lerpB;
+    return (lerpR << 16) | (lerpG << 8) | lerpB;
 }
 
 window.onload = start;

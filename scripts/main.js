@@ -173,6 +173,8 @@ class View extends Bitmap
     constructor(width, height)
     {
         super(width, height);
+
+        this.zBuffer = new Float32Array(width * height);
     }
 
     update(delta)
@@ -181,19 +183,40 @@ class View extends Bitmap
 
     renderPerspective()
     {
+        for (let i = 0; i < this.zBuffer.length; i++)
+            this.zBuffer[i] = 10000;
+
         let r = new Random(123);
 
-        for (let i = 0; i < 1000; i++)
+        for (let i = 0; i < 2000; i++)
         {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -2, r.nextFloat() * 0xffffff));
+            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 0, 0xffffff));
         }
 
-        // this.drawPoint(new Vertex(3, 0, 3), 0x000000);
-        // this.drawPoint(new Vertex(-3, 0, 3), 0xff0000);
-        // this.drawPoint(new Vertex(3, 0, -3), 0x00ff00);
-        // this.drawPoint(new Vertex(-3, 0, -3), 0x0000ff);
+        for (let i = 0; i < 2000; i++)
+        {
+            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -3.5, 0x8080ff));
+        }
 
-        this.drawLine(new Vertex(-2, 0, -2), new Vertex(2, 0.5, -4));
+        for (let i = 0; i < 2000; i++)
+        {
+            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -5, 0xf080f0));
+        }
+
+        for (let i = 0; i < 2000; i++)
+        {
+            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, -1, r.nextFloat() * 1 - 0.5 - 1, 0x404040));
+        }
+
+
+        // this.drawPoint(new Vertex(3, 0, 3));
+        // this.drawPoint(new Vertex(-3, 0, 3));
+        // this.drawPoint(new Vertex(3, 0, -3));
+        // this.drawPoint(new Vertex(-3, 0, -3));
+
+        this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
+
+        this.drawLine(new Vertex(-3, 0, 1, 0xff0000), new Vertex(2, 0.5, 2, 0x00ff00));
     }
 
     drawPoint(v)
@@ -201,7 +224,7 @@ class View extends Bitmap
         let vp = this.playerTransform(v);
         let sp = this.convertIntoScreenSpace(vp);
 
-        if (sp != undefined) this.renderPixel(sp);
+        if (sp != undefined) this.renderPixel(sp, vp.z);
     }
 
     drawLine(v0, v1)
@@ -214,30 +237,51 @@ class View extends Bitmap
 
         if (vp0.z < zClip)
         {
-            vp0.z = vp0.z + (zClip - vp0.z);
+            let zp = (zClip - vp0.z) / (vp1.z - vp0.z);
+            vp0.z = vp0.z + (vp1.z - vp0.z) * zp;
+            vp0.x = vp0.x + (vp1.x - vp0.x) * zp;
+            vp0.y = vp0.y + (vp1.y - vp0.y) * zp;
         }
 
         if (vp1.z < zClip)
         {
-            vp1.z = vp1.z + (zClip - vp1.z);
+            let zp = (zClip - vp1.z) / (vp0.z - vp1.z);
+            vp1.z = vp1.z + (vp0.z - vp1.z) * zp;
+            vp1.x = vp1.x + (vp0.x - vp1.x) * zp;
+            vp1.y = vp1.y + (vp0.y - vp1.y) * zp;
         }
 
         let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0, vp0.y / vp0.z * FOV + HEIGHT / 2.0, vp0.color);
         let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0, vp1.y / vp1.z * FOV + HEIGHT / 2.0, vp1.color);
 
+        // Render Left to Right
         if (p1.x < p0.x)
         {
-            if (backFaceCulling) return;
-
             let tmp = p0;
             p0 = p1;
             p1 = tmp;
+
+            tmp = vp0;
+            vp0 = vp1;
+            vp1 = tmp;
         }
 
-        // if (p0.x < 0) p0.x = 0;
-        // if (p0.y < 0) p0.y = 0;
-        // if (p1.x > WIDTH) p1.x = WIDTH;
-        // if (p1.y > HEIGHT) p1.y = HEIGHT;
+        // if (p0.x < 0)
+        // {
+        //     p0.x = 0;
+        // }
+        // if (p0.y < 0)
+        // {
+        //     p0.y = 0;
+        // }
+        // if (p1.x > WIDTH)
+        // {
+        //     p1.x = WIDTH;
+        // }
+        // if (p1.y > HEIGHT)
+        // {
+        //     p1.y = HEIGHT;
+        // }
 
         let dx = p1.x - p0.x;
         let dy = p1.y - p0.y;
@@ -246,13 +290,15 @@ class View extends Bitmap
 
         if (m <= 1)
         {
-            for (let x = Math.floor(p0.x); x < Math.floor(p1.x); x++)
+            for (let x = Math.ceil(p0.x); x < Math.ceil(p1.x); x++)
             {
                 let per = (x - p0.x) / (p1.x - p0.x);
 
                 let y = p0.y + (p1.y - p0.y) * per;
+                let z = vp0.z + (vp1.z - vp0.z) * per;
 
-                this.renderPixel(new Pixel(int(x), int(y)));
+                let c = lerpColor(p0.color, p1.color, per);
+                this.renderPixel(new Pixel(int(x), int(y), c), z);
             }
         }
         else
@@ -262,15 +308,21 @@ class View extends Bitmap
                 let tmp = p0;
                 p0 = p1;
                 p1 = tmp;
+
+                tmp = vp0;
+                vp0 = vp1;
+                vp1 = tmp;
             }
 
-            for (let y = Math.floor(p0.y); y < Math.floor(p1.y); y++)
+            for (let y = Math.ceil(p0.y); y < Math.ceil(p1.y); y++)
             {
                 let per = (y - p0.y) / (p1.y - p0.y);
 
                 let x = p0.x + (p1.x - p0.x) * per;
+                let z = vp0.z + (vp1.z - vp0.z) * per;
 
-                this.renderPixel(new Pixel(int(x), int(y), 0x00ffff));
+                let c = lerpColor(p0.color, p1.color, per);
+                this.renderPixel(new Pixel(int(x), int(y), c), z);
             }
         }
     }
@@ -300,10 +352,13 @@ class View extends Bitmap
         return new Pixel(sx, sy, p.color);
     }
 
-    renderPixel(p)
+    renderPixel(p, z)
     {
-        if (!this.checkOutOfScreen(p))
+        if (!this.checkOutOfScreen(p) && z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
+        {
             this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = p.color;
+            this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = z;
+        }
     }
 
     checkOutOfScreen(p)
@@ -477,6 +532,28 @@ function convert(bitmap, scale)
 function int(a)
 {
     return Math.floor(a);
+}
+
+function lerp(a, b, per)
+{
+    return a * (1.0 - per) + b * per;
+}
+
+function lerpColor(a, b, per)
+{
+    let ar = (a >> 16) & 0xff;
+    let ag = (a >> 8) & 0xff;
+    let ab = a & 0xff;
+
+    let br = (b >> 16) & 0xff;
+    let bg = (b >> 8) & 0xff;
+    let bb = b & 0xff;
+
+    let lerpR = lerp(ar, br, per);
+    let lerpG = lerp(ag, bg, per);
+    let lerpB = lerp(ab, bb, per);
+
+    return lerpR << 16 | lerpG << 8 || lerpB;
 }
 
 window.onload = start;

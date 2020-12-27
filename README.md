@@ -2,4 +2,5 @@
 
 https://sopiro.github.io/js_bitmap_renderer/
 
-<img src=".github/cake.png" />
+## 20201227 current status
+![image](.github/bdbaf6b.gif)

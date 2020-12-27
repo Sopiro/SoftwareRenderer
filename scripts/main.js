@@ -25,7 +25,9 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 
 let player;
 
-let FOV = HEIGHT / SCALE
+const FOV = HEIGHT / SCALE
+const zClip = 0.1;
+let backFaceCulling = false;
 
 /**
  * Creates a pseudo-random value generator. The seed must be an integer.
@@ -59,20 +61,24 @@ Random.prototype.nextFloat = function (opt_minOrMax, opt_max)
 
 class Vertex
 {
-    constructor(x, y, z)
+    constructor(x, y, z, color)
     {
         this.x = x;
         this.y = y;
         this.z = z;
+        if (color == undefined) color = 0xff00ff;
+        this.color = color;
     }
 }
 
 class Pixel
 {
-    constructor(x, y)
+    constructor(x, y, color)
     {
         this.x = x;
         this.y = y;
+        if (color == undefined) color = 0xff00ff;
+        this.color = color;
     }
 }
 
@@ -119,7 +125,7 @@ class Player
         if (mouse.down)
         {
             this.rotY += mouse.dx * 0.1 * this.rotSpeed * delta;
-            this.rotX -= mouse.dy * 0.1 * this.rotSpeed * delta;
+            this.rotX += mouse.dy * 0.1 * this.rotSpeed * delta;
         }
     }
 }
@@ -171,7 +177,6 @@ class View extends Bitmap
 
     update(delta)
     {
-
     }
 
     renderPerspective()
@@ -180,39 +185,101 @@ class View extends Bitmap
 
         for (let i = 0; i < 1000; i++)
         {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -2), r.nextFloat() * 0xffffff);
+            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -2, r.nextFloat() * 0xffffff));
         }
 
         // this.drawPoint(new Vertex(3, 0, 3), 0x000000);
         // this.drawPoint(new Vertex(-3, 0, 3), 0xff0000);
-        this.drawPoint(new Vertex(3, 0, -3), 0x00ff00);
-        this.drawPoint(new Vertex(-3, 0, -3), 0x0000ff);
+        // this.drawPoint(new Vertex(3, 0, -3), 0x00ff00);
+        // this.drawPoint(new Vertex(-3, 0, -3), 0x0000ff);
 
-        this.drawLine(new Vertex(-2, 0, -2), new Vertex(2, 1, -2));
+        this.drawLine(new Vertex(-2, 0, -2), new Vertex(2, 0.5, -4));
     }
 
-    drawPoint(p, color)
+    drawPoint(v)
     {
-        if (color == undefined) color = 0xff00ff;
-
-        let vp = this.playerTransform(p);
+        let vp = this.playerTransform(v);
         let sp = this.convertIntoScreenSpace(vp);
-        
-        if (sp != undefined) this.renderPixel(sp, color);
+
+        if (sp != undefined) this.renderPixel(sp);
     }
 
-    drawLine(p0, p1, color)
+    drawLine(v0, v1)
     {
-        if (color == undefined) color = 0xff00ff;
+        let vp0 = this.playerTransform(v0);
+        let vp1 = this.playerTransform(v1);
 
-        let vp0 = this.playerTransform(p0);
-        let vp1 = this.playerTransform(p1);
+        // z-Clipping
+        if (vp0.z < zClip && vp1.z < zClip) return;
+
+        if (vp0.z < zClip)
+        {
+            vp0.z = vp0.z + (zClip - vp0.z);
+        }
+
+        if (vp1.z < zClip)
+        {
+            vp1.z = vp1.z + (zClip - vp1.z);
+        }
+
+        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0, vp0.y / vp0.z * FOV + HEIGHT / 2.0, vp0.color);
+        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0, vp1.y / vp1.z * FOV + HEIGHT / 2.0, vp1.color);
+
+        if (p1.x < p0.x)
+        {
+            if (backFaceCulling) return;
+
+            let tmp = p0;
+            p0 = p1;
+            p1 = tmp;
+        }
+
+        // if (p0.x < 0) p0.x = 0;
+        // if (p0.y < 0) p0.y = 0;
+        // if (p1.x > WIDTH) p1.x = WIDTH;
+        // if (p1.y > HEIGHT) p1.y = HEIGHT;
+
+        let dx = p1.x - p0.x;
+        let dy = p1.y - p0.y;
+
+        let m = Math.abs(dy / dx);
+
+        if (m <= 1)
+        {
+            for (let x = Math.floor(p0.x); x < Math.floor(p1.x); x++)
+            {
+                let per = (x - p0.x) / (p1.x - p0.x);
+
+                let y = p0.y + (p1.y - p0.y) * per;
+
+                this.renderPixel(new Pixel(int(x), int(y)));
+            }
+        }
+        else
+        {
+            if (p1.y < p0.y)
+            {
+                let tmp = p0;
+                p0 = p1;
+                p1 = tmp;
+            }
+
+            for (let y = Math.floor(p0.y); y < Math.floor(p1.y); y++)
+            {
+                let per = (y - p0.y) / (p1.y - p0.y);
+
+                let x = p0.x + (p1.x - p0.x) * per;
+
+                this.renderPixel(new Pixel(int(x), int(y), 0x00ffff));
+            }
+        }
     }
 
     playerTransform(p)
     {
+        // Right-hand coordinate system
         let ox = p.x - player.x;
-        let oy = p.y + player.y;
+        let oy = p.y - player.y;
         let oz = -p.z + player.z;
 
         // Combined XYZ Rotation
@@ -220,25 +287,28 @@ class View extends Bitmap
         let yy = ox * (+player.sinX * player.sinY * player.cosZ + player.cosX * player.sinZ) + oy * (-player.sinX * player.sinY * player.sinZ + player.cosX * player.cosZ) + oz * (-player.sinX * player.cosY);
         let zz = ox * (-player.cosX * player.sinY * player.cosZ + player.sinX * player.sinZ) + oy * (+player.cosX * player.sinY * player.sinZ + player.sinX * player.cosZ) + oz * (+player.cosX * player.cosY);
 
-        return { x: xx, y: yy, z: zz }
+        return new Vertex(xx, yy, zz, p.color);
     }
 
     convertIntoScreenSpace(p)
     {
         if (p.z < 0) return undefined;
 
-        let sx = Math.floor((p.x * FOV / p.z + WIDTH / 2.0));
-        let sy = Math.floor((p.y * FOV / p.z + HEIGHT / 2.0));
+        let sx = int((p.x / p.z * FOV + WIDTH / 2.0));
+        let sy = int((p.y / p.z * FOV + HEIGHT / 2.0));
 
-        if (sx < 0 || sx >= this.width || sy < 0 || sy >= this.height)
-            return undefined;
-        else
-            return new Pixel(sx, sy);
+        return new Pixel(sx, sy, p.color);
     }
 
-    renderPixel(p, color)
+    renderPixel(p)
     {
-        this.pixels[p.x + p.y * this.width] = color;
+        if (!this.checkOutOfScreen(p))
+            this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = p.color;
+    }
+
+    checkOutOfScreen(p)
+    {
+        return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
     }
 }
 

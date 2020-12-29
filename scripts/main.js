@@ -26,7 +26,7 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 let player;
 
 const FOV = HEIGHT / SCALE
-const zClip = 0.1;
+const zClip = 0.01;
 let backFaceCulling = false;
 
 /**
@@ -218,7 +218,7 @@ class View extends Bitmap
 
         // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
 
-        // this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -1, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -1, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
     }
 
     drawPoint(v)
@@ -255,44 +255,8 @@ class View extends Bitmap
             vp1.color = lerpColor(vp1.color, vp0.color, r);
         }
 
-        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0, vp0.y / vp0.z * FOV + HEIGHT / 2.0, vp0.color);
-        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0, vp1.y / vp1.z * FOV + HEIGHT / 2.0, vp1.color);
-
-        if (p0.x < 0)
-        {
-            let r = -p0.x / (p1.x - p0.x);
-            p0.x = 0;
-            p0.y = p0.y + (p1.y - p0.y) * r;
-            p0.z = p0.z + (p1.z - p0.z) * r;
-            p0.color = lerpColor(p0.color, p1.color, r);
-        }
-
-        if (p0.y < 0)
-        {
-            let r = -p0.y / (p1.y - p0.y);
-            p0.x = p0.x + (p1.x - p0.x) * r;;
-            p0.y = 0;
-            p0.z = p0.z + (p1.z - p0.z) * r;
-            p0.color = lerpColor(p0.color, p1.color, r);
-        }
-
-        if (p1.x > WIDTH)
-        {
-            let r = (WIDTH - p1.x) / (p0.x - p1.x);
-            p1.x = WIDTH;
-            p1.y = p1.y + (p0.y - p1.y) * r;
-            p1.z = p1.z + (p0.z - p1.z) * r;
-            p1.color = lerpColor(p1.color, p0.color, r);
-        }
-
-        if (p1.y > HEIGHT)
-        {
-            let r = (HEIGHT - p1.y) / (p0.y - p1.y);
-            p1.x = p1.x + (p0.x - p1.x) * r;
-            p1.y = HEIGHT;
-            p1.z = p1.z + (p0.z - p1.z) * r;
-            p1.color = lerpColor(p1.color, p0.color, r);
-        }
+        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
+        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5, vp1.color);
 
         // Render Left to Right
         if (p1.x < p0.x)
@@ -306,6 +270,16 @@ class View extends Bitmap
             vp1 = tmp;
         }
 
+        let x0 = Math.ceil(p0.x);
+        let y0 = Math.ceil(p0.y);
+        let x1 = Math.ceil(p1.x);
+        let y1 = Math.ceil(p1.y);
+
+        if (x0 < 0) x0 = 0;
+        if (x1 > WIDTH) x1 = WIDTH;
+        if (y0 < 0) y0 = 0;
+        if (y1 > HEIGHT) y1 = HEIGHT;
+
         let dx = p1.x - p0.x;
         let dy = p1.y - p0.y;
 
@@ -313,7 +287,7 @@ class View extends Bitmap
 
         if (m <= 1)
         {
-            for (let x = Math.ceil(p0.x); x < Math.ceil(p1.x); x++)
+            for (let x = x0; x < x1; x++)
             {
                 let per = (x - p0.x) / (p1.x - p0.x);
 
@@ -337,7 +311,17 @@ class View extends Bitmap
                 vp1 = tmp;
             }
 
-            for (let y = Math.ceil(p0.y); y < Math.ceil(p1.y); y++)
+            x0 = Math.ceil(p0.x);
+            y0 = Math.ceil(p0.y);
+            x1 = Math.ceil(p1.x);
+            y1 = Math.ceil(p1.y);
+
+            if (x0 < 0) x0 = 0;
+            if (x1 > WIDTH) x1 = WIDTH;
+            if (y0 < 0) y0 = 0;
+            if (y1 > HEIGHT) y1 = HEIGHT;
+
+            for (let y = y0; y < y1; y++)
             {
                 let per = (y - p0.y) / (p1.y - p0.y);
 
@@ -349,7 +333,7 @@ class View extends Bitmap
             }
         }
 
-        return { p0: p0, p1: p1 };
+        return { x0: x0, y0: y0, x1: x1, y1: y1 };
     }
 
     drawTriangle(v0, v1, v2)
@@ -364,7 +348,18 @@ class View extends Bitmap
         let l1 = this.drawLine(v1, v2);
         let l2 = this.drawLine(v0, v2);
 
-        console.log(l0, l1, l2);
+        let minX = Math.min(l0.x0, l0.x1, l1.x0, l1.x1, l2.x0, l2.x1);
+        let maxX = Math.max(l0.x0, l0.x1, l1.x0, l1.x1, l2.x0, l2.x1);
+        let minY = Math.min(l0.y0, l0.y1, l1.y0, l1.y1, l2.y0, l2.y1);
+        let maxY = Math.max(l0.y0, l0.y1, l1.y0, l1.y1, l2.y0, l2.y1);
+
+        // for (let y = minY; y <= maxY; y++)
+        // {
+        //     for (let x = minX; x <= maxX; x++)
+        //     {
+        //         this.renderPixel(new Pixel(x, y, 0xffffff), -109);
+        //     }
+        // }
     }
 
     playerTransform(p)
@@ -572,7 +567,7 @@ function convert(bitmap, scale)
 
 function int(a)
 {
-    return Math.floor(a);
+    return Math.ceil(a);
 }
 
 function lerp(a, b, per)

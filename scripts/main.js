@@ -89,7 +89,7 @@ class Player
         this.speed = 3.0;
         this.rotSpeed = 60.0;
 
-        this.x = 0.0; this.y = 0.0; this.z = 0.0;
+        this.x = 0.0; this.y = 0.0; this.z = 2.0;
 
         this.rotX = 0.0; this.rotY = 0.0; this.rotZ = 0.0;
 
@@ -188,25 +188,25 @@ class View extends Bitmap
 
         let r = new Random(123);
 
-        for (let i = 0; i < 2000; i++)
-        {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 0, 0xffffff));
-        }
+        // for (let i = 0; i < 2000; i++)
+        // {
+        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 0, 0xffffff));
+        // }
 
-        for (let i = 0; i < 2000; i++)
-        {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -3.5, 0x8080ff));
-        }
+        // for (let i = 0; i < 2000; i++)
+        // {
+        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -3.5, 0x8080ff));
+        // }
 
         for (let i = 0; i < 2000; i++)
         {
             this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -5, 0xf080f0));
         }
 
-        for (let i = 0; i < 2000; i++)
-        {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, -1, r.nextFloat() * 1 - 0.5 - 1, 0x404040));
-        }
+        // for (let i = 0; i < 2000; i++)
+        // {
+        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, -1, r.nextFloat() * 1 - 0.5 - 1, 0x404040));
+        // }
 
 
         // this.drawPoint(new Vertex(3, 0, 3));
@@ -216,7 +216,9 @@ class View extends Bitmap
 
         this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
 
-        this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
+        // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
+
+        // this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -1, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
     }
 
     drawPoint(v)
@@ -233,26 +235,64 @@ class View extends Bitmap
         let vp1 = this.playerTransform(v1);
 
         // z-Clipping
-        if (vp0.z < zClip && vp1.z < zClip) return;
+        if (vp0.z < zClip && vp1.z < zClip) return undefined;
 
         if (vp0.z < zClip)
         {
-            let zp = (zClip - vp0.z) / (vp1.z - vp0.z);
-            vp0.z = vp0.z + (vp1.z - vp0.z) * zp;
-            vp0.x = vp0.x + (vp1.x - vp0.x) * zp;
-            vp0.y = vp0.y + (vp1.y - vp0.y) * zp;
+            let r = (zClip - vp0.z) / (vp1.z - vp0.z);
+            vp0.z = vp0.z + (vp1.z - vp0.z) * r;
+            vp0.x = vp0.x + (vp1.x - vp0.x) * r;
+            vp0.y = vp0.y + (vp1.y - vp0.y) * r;
+            vp0.color = lerpColor(vp0.color, vp1.color, r);
         }
 
         if (vp1.z < zClip)
         {
-            let zp = (zClip - vp1.z) / (vp0.z - vp1.z);
-            vp1.z = vp1.z + (vp0.z - vp1.z) * zp;
-            vp1.x = vp1.x + (vp0.x - vp1.x) * zp;
-            vp1.y = vp1.y + (vp0.y - vp1.y) * zp;
+            let r = (zClip - vp1.z) / (vp0.z - vp1.z);
+            vp1.z = vp1.z + (vp0.z - vp1.z) * r;
+            vp1.x = vp1.x + (vp0.x - vp1.x) * r;
+            vp1.y = vp1.y + (vp0.y - vp1.y) * r;
+            vp1.color = lerpColor(vp1.color, vp0.color, r);
         }
 
         let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0, vp0.y / vp0.z * FOV + HEIGHT / 2.0, vp0.color);
         let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0, vp1.y / vp1.z * FOV + HEIGHT / 2.0, vp1.color);
+
+        if (p0.x < 0)
+        {
+            let r = -p0.x / (p1.x - p0.x);
+            p0.x = 0;
+            p0.y = p0.y + (p1.y - p0.y) * r;
+            p0.z = p0.z + (p1.z - p0.z) * r;
+            p0.color = lerpColor(p0.color, p1.color, r);
+        }
+
+        if (p0.y < 0)
+        {
+            let r = -p0.y / (p1.y - p0.y);
+            p0.x = p0.x + (p1.x - p0.x) * r;;
+            p0.y = 0;
+            p0.z = p0.z + (p1.z - p0.z) * r;
+            p0.color = lerpColor(p0.color, p1.color, r);
+        }
+
+        if (p1.x > WIDTH)
+        {
+            let r = (WIDTH - p1.x) / (p0.x - p1.x);
+            p1.x = WIDTH;
+            p1.y = p1.y + (p0.y - p1.y) * r;
+            p1.z = p1.z + (p0.z - p1.z) * r;
+            p1.color = lerpColor(p1.color, p0.color, r);
+        }
+
+        if (p1.y > HEIGHT)
+        {
+            let r = (HEIGHT - p1.y) / (p0.y - p1.y);
+            p1.x = p1.x + (p0.x - p1.x) * r;
+            p1.y = HEIGHT;
+            p1.z = p1.z + (p0.z - p1.z) * r;
+            p1.color = lerpColor(p1.color, p0.color, r);
+        }
 
         // Render Left to Right
         if (p1.x < p0.x)
@@ -265,23 +305,6 @@ class View extends Bitmap
             vp0 = vp1;
             vp1 = tmp;
         }
-
-        // if (p0.x < 0)
-        // {
-        //     p0.x = 0;
-        // }
-        // if (p0.y < 0)
-        // {
-        //     p0.y = 0;
-        // }
-        // if (p1.x > WIDTH)
-        // {
-        //     p1.x = WIDTH;
-        // }
-        // if (p1.y > HEIGHT)
-        // {
-        //     p1.y = HEIGHT;
-        // }
 
         let dx = p1.x - p0.x;
         let dy = p1.y - p0.y;
@@ -325,6 +348,23 @@ class View extends Bitmap
                 this.renderPixel(new Pixel(int(x), int(y), c), z);
             }
         }
+
+        return { p0: p0, p1: p1 };
+    }
+
+    drawTriangle(v0, v1, v2)
+    {
+        let vp0 = this.playerTransform(v0);
+        let vp1 = this.playerTransform(v1);
+        let vp2 = this.playerTransform(v2);
+
+        if (vp0.z < zClip && vp1.z < zClip && vp2.z < zClip) return;
+
+        let l0 = this.drawLine(v0, v1);
+        let l1 = this.drawLine(v1, v2);
+        let l2 = this.drawLine(v0, v2);
+
+        console.log(l0, l1, l2);
     }
 
     playerTransform(p)
@@ -365,6 +405,7 @@ class View extends Bitmap
     {
         return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
     }
+
 }
 
 function start()
@@ -557,3 +598,10 @@ function lerpColor(a, b, per)
 }
 
 window.onload = start;
+
+// let img = new Image();
+// img.src = "./imgs/sprite.png";
+// img.onload = function ()
+// {
+//     // console.log(img);
+// }

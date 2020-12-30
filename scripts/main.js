@@ -1,6 +1,6 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 4;
+let SCALE = 8;
 
 let previousTime = 0;
 let passedTime = 0;
@@ -59,6 +59,123 @@ Random.prototype.nextFloat = function (opt_minOrMax, opt_max)
     return (this.next() - 1) / 2147483646;
 };
 
+class Vector2
+{
+    constructor(x, y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+
+    normalize()
+    {
+        let len = this.getLength();
+
+        this.x /= len;
+        this.y /= len;
+    }
+
+    getLength()
+    {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    dot(v)
+    {
+        return this.x * v.x + this.y * v.y;
+    }
+
+    cross(v)
+    {
+        return this.y * v.x - this.x * v.y;
+    }
+
+    add(v)
+    {
+        return new Vector2(this.x + v.x, this.y + v.y);
+    }
+
+    sub(v)
+    {
+        return new Vector2(this.x - v.x, this.y - v.y);
+    }
+
+    div(v)
+    {
+        return new Vector2(this.x / v, this.y / v);
+    }
+
+    mul(v)
+    {
+        return new Vector2(this.x * v, this.y * v);
+    }
+
+    equals(v)
+    {
+        return this.x == v.x && this.y == v.y;
+    }
+}
+
+class Vector3
+{
+    constructor(x, y, z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    normalize()
+    {
+        let len = this.getLength();
+
+        this.x /= len;
+        this.y /= len;
+        this.z /= len;
+    }
+
+    getLength()
+    {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    dot(v)
+    {
+        return this.x * v.x + this.y * v.y * this.z * v.z;
+    }
+
+    cross(v)
+    {
+        return Vector3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.z * v.x);
+    }
+
+    add(v)
+    {
+        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
+    }
+
+    sub(v)
+    {
+        return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
+    }
+
+    div(v)
+    {
+        return new Vector3(this.x / v, this.y / v, this.z / v);
+    }
+
+    mul(v)
+    {
+        return new Vector3(this.x * v, this.y * v, this.z * v);
+    }
+
+    equals(v)
+    {
+        return this.x == v.x && this.y == v.y && this.z == v.z;
+    }
+}
+
+
 class Vertex
 {
     constructor(x, y, z, color)
@@ -66,8 +183,10 @@ class Vertex
         this.x = x;
         this.y = y;
         this.z = z;
-        if (color == undefined) color = 0xff00ff;
-        this.color = color;
+
+        if (typeof color == "number") this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        else if (color == undefined) this.color = new Vector3(255, 0, 255);
+        else this.color = color;
     }
 }
 
@@ -77,8 +196,9 @@ class Pixel
     {
         this.x = x;
         this.y = y;
-        if (color == undefined) color = 0xff00ff;
-        this.color = color;
+        if (typeof (color) == "number") this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        else if (color == undefined) this.color = new Vector3(255, 0, 255);
+        else this.color = color;
     }
 }
 
@@ -219,6 +339,7 @@ class View extends Bitmap
         // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
 
         this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -1, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        // console.log(new Vector2(10, 0).cross(new Vector2(10, 10)));
     }
 
     drawPoint(v)
@@ -243,7 +364,7 @@ class View extends Bitmap
             vp0.z = vp0.z + (vp1.z - vp0.z) * r;
             vp0.x = vp0.x + (vp1.x - vp0.x) * r;
             vp0.y = vp0.y + (vp1.y - vp0.y) * r;
-            vp0.color = lerpColor(vp0.color, vp1.color, r);
+            vp0.color = lerpVector2(vp0.color, vp1.color, r);
         }
 
         if (vp1.z < zClip)
@@ -252,7 +373,7 @@ class View extends Bitmap
             vp1.z = vp1.z + (vp0.z - vp1.z) * r;
             vp1.x = vp1.x + (vp0.x - vp1.x) * r;
             vp1.y = vp1.y + (vp0.y - vp1.y) * r;
-            vp1.color = lerpColor(vp1.color, vp0.color, r);
+            vp1.color = lerpVector2(vp1.color, vp0.color, r);
         }
 
         let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
@@ -294,7 +415,7 @@ class View extends Bitmap
                 let y = p0.y + (p1.y - p0.y) * per;
                 let z = vp0.z + (vp1.z - vp0.z) * per;
 
-                let c = lerpColor(p0.color, p1.color, per);
+                let c = lerpVector2(p0.color, p1.color, per);
                 this.renderPixel(new Pixel(int(x), int(y), c), z);
             }
         }
@@ -328,7 +449,7 @@ class View extends Bitmap
                 let x = p0.x + (p1.x - p0.x) * per;
                 let z = vp0.z + (vp1.z - vp0.z) * per;
 
-                let c = lerpColor(p0.color, p1.color, per);
+                let c = lerpVector2(p0.color, p1.color, per);
                 this.renderPixel(new Pixel(int(x), int(y), c), z);
             }
         }
@@ -344,22 +465,51 @@ class View extends Bitmap
 
         if (vp0.z < zClip && vp1.z < zClip && vp2.z < zClip) return;
 
-        let l0 = this.drawLine(v0, v1);
-        let l1 = this.drawLine(v1, v2);
-        let l2 = this.drawLine(v0, v2);
+        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
+        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5, vp1.color);
+        let p2 = new Pixel(vp2.x / vp2.z * FOV + WIDTH / 2.0 - 0.5, vp2.y / vp2.z * FOV + HEIGHT / 2.0 - 0.5, vp2.color);
 
-        let minX = Math.min(l0.x0, l0.x1, l1.x0, l1.x1, l2.x0, l2.x1);
-        let maxX = Math.max(l0.x0, l0.x1, l1.x0, l1.x1, l2.x0, l2.x1);
-        let minY = Math.min(l0.y0, l0.y1, l1.y0, l1.y1, l2.y0, l2.y1);
-        let maxY = Math.max(l0.y0, l0.y1, l1.y0, l1.y1, l2.y0, l2.y1);
+        let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
+        let maxX = Math.ceil(Math.max(p0.x, p1.x, p2.x));
+        let minY = Math.ceil(Math.min(p0.y, p1.y, p2.y));
+        let maxY = Math.ceil(Math.max(p0.y, p1.y, p2.y));
 
-        // for (let y = minY; y <= maxY; y++)
-        // {
-        //     for (let x = minX; x <= maxX; x++)
-        //     {
-        //         this.renderPixel(new Pixel(x, y, 0xffffff), -109);
-        //     }
-        // }
+        if (minX < 0) minX = 0;
+        if (minY < 0) minY = 0;
+        if (maxX > WIDTH) maxX = WIDTH;
+        if (maxY > HEIGHT) maxY = HEIGHT;
+
+        let v10 = new Vector2(p1.x - p0.x, p1.y - p0.y);
+        let v21 = new Vector2(p2.x - p1.x, p2.y - p1.y);
+        let v02 = new Vector2(p0.x - p2.x, p0.y - p2.y);
+        let v20 = new Vector2(p2.x - p0.x, p2.y - p0.y);
+
+        let area = v10.cross(v20);
+
+        // Culling back faces
+        if (area < 0) return;
+
+        for (let y = minY; y < maxY; y++)
+        {
+            for (let x = minX; x < maxX; x++)
+            {
+                let p = new Vector3(x, y);
+
+                let w0 = v21.cross(p.sub(p1));
+                let w1 = v02.cross(p.sub(p2));
+                let w2 = v10.cross(p.sub(p0));
+
+                if (w0 >= 0 && w1 >= 0 && w2 >= 0)
+                {
+                    w0 /= area;
+                    w1 /= area;
+                    w2 /= area;
+
+                    let c = lerpVector3(p0.color, p1.color, p2.color, w0, w1, w2);
+                    this.renderPixel(new Pixel(x, y, c), -10);
+                }
+            }
+        }
     }
 
     playerTransform(p)
@@ -391,7 +541,7 @@ class View extends Bitmap
     {
         if (!this.checkOutOfScreen(p) && z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
         {
-            this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = p.color;
+            this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = converColor(p.color);
             this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = z;
         }
     }
@@ -575,21 +725,23 @@ function lerp(a, b, per)
     return a * (1.0 - per) + b * per;
 }
 
-function lerpColor(a, b, per)
+function lerpVector2(a, b, per)
 {
-    let ar = (a >> 16) & 0xff;
-    let ag = (a >> 8) & 0xff;
-    let ab = a & 0xff;
+    return a.mul(1 - per).add(b.mul(per));
+}
 
-    let br = (b >> 16) & 0xff;
-    let bg = (b >> 8) & 0xff;
-    let bb = b & 0xff;
+function lerpVector3(a, b, c, w0, w1, w2)
+{
+    let wa = a.mul(w0);
+    let wb = b.mul(w1);
+    let wc = c.mul(w2);
 
-    let lerpR = lerp(ar, br, per);
-    let lerpG = lerp(ag, bg, per);
-    let lerpB = lerp(ab, bb, per);
+    return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
+}
 
-    return (lerpR << 16) | (lerpG << 8) | lerpB;
+function converColor(v)
+{
+    return (v.x << 16) | (v.y << 8) | v.z;
 }
 
 window.onload = start;

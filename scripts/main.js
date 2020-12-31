@@ -32,7 +32,7 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 let player;
 
 const FOV = HEIGHT / SCALE
-const zClipNear = 0.1;
+const zClipNear = 0.01;
 let backFaceCulling = false;
 
 /**
@@ -183,11 +183,9 @@ class Vector3
 
 class Vertex
 {
-    constructor(x, y, z, color, texCoord)
+    constructor(pos, color, texCoord)
     {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.pos = pos;
 
         if (typeof color == "number") this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
         else if (color == undefined) this.color = new Vector3(255, 0, 255);
@@ -205,20 +203,18 @@ class Player
         this.speed = 3.0;
         this.rotSpeed = 60.0;
 
-        this.x = 0.0; this.y = 0.0; this.z = 2.0;
+        this.pos = new Vector3(0.0, 0.0, 0.0);
+        this.rot = new Vector3(0.0, 0.0, 0.0);
 
-        this.rotX = 0.0; this.rotY = 0.0; this.rotZ = 0.0;
-
-        this.sinX = 0.0; this.cosX = 0.0;
-        this.sinY = 0.0; this.cosY = 0.0;
-        this.sinZ = 0.0; this.cosZ = 0.0;
+        this.sin = new Vector3(0.0, 0.0, 0.0);
+        this.cos = new Vector3(0.0, 0.0, 0.0);
     }
 
     update(delta)
     {
-        this.sinX = Math.sin(-this.rotX * Math.PI / 180.0); this.cosX = Math.cos(-this.rotX * Math.PI / 180.0);
-        this.sinY = Math.sin(-this.rotY * Math.PI / 180.0); this.cosY = Math.cos(-this.rotY * Math.PI / 180.0);
-        this.sinZ = Math.sin(-this.rotZ * Math.PI / 180.0); this.cosZ = Math.cos(-this.rotZ * Math.PI / 180.0);
+        this.sin.x = Math.sin(-this.rot.x * Math.PI / 180.0); this.cos.x = Math.cos(-this.rot.x * Math.PI / 180.0);
+        this.sin.y = Math.sin(-this.rot.y * Math.PI / 180.0); this.cos.y = Math.cos(-this.rot.y * Math.PI / 180.0);
+        this.sin.z = Math.sin(-this.rot.z * Math.PI / 180.0); this.cos.z = Math.cos(-this.rot.z * Math.PI / 180.0);
 
         // Right hand coordinate system
 
@@ -230,18 +226,18 @@ class Player
         if (keys.up) az--;
         if (keys.down) az++;
 
-        this.x += (this.cosY * ax + this.sinY * az) * this.speed * delta;
-        this.z += (-this.sinY * ax + this.cosY * az) * this.speed * delta;
+        this.pos.x += (this.cos.y * ax + this.sin.y * az) * this.speed * delta;
+        this.pos.z += (-this.sin.y * ax + this.cos.y * az) * this.speed * delta;
 
-        if (keys.space) this.y += this.speed * delta;
-        if (keys.ctrl) this.y -= this.speed * delta;
-        if (keys.q) this.rotY -= this.rotSpeed * delta;
-        if (keys.e) this.rotY += this.rotSpeed * delta;
+        if (keys.space) this.pos.y += this.speed * delta;
+        if (keys.ctrl) this.pos.y -= this.speed * delta;
+        if (keys.q) this.rot.y -= this.rotSpeed * delta;
+        if (keys.e) this.rot.y += this.rotSpeed * delta;
 
         if (mouse.down)
         {
-            this.rotY += mouse.dx * 0.1 * this.rotSpeed * delta;
-            this.rotX += mouse.dy * 0.1 * this.rotSpeed * delta;
+            this.rot.y += mouse.dx * 0.1 * this.rotSpeed * delta;
+            this.rot.x += mouse.dy * 0.1 * this.rotSpeed * delta;
         }
     }
 }
@@ -302,55 +298,72 @@ class View extends Bitmap
 
         let r = new Random(123);
 
-        this.drawTriangle(
-            new Vertex(-1, -1, -3, 0x808080, new Vector2(0, 1)),
-            new Vertex(-1, 1, -3, 0x000000, new Vector2(0, 0)),
-            new Vertex(1, 1, -3, 0x808080, new Vector2(1, 0)), spritesheet);
-        this.drawTriangle(
-            new Vertex(-1, -1, -3, 0x808080, new Vector2(0, 1)),
-            new Vertex(1, 1, -3, 0x808080, new Vector2(1, 0)),
-            new Vertex(1, -1, -3, 0xffffff, new Vector2(1, 1)), spritesheet);
+        // this.drawPoint(new Vertex(new Vector3(1, 1, -1), 0xff00ff));
 
-        // this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
-        // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
+        // for (let i = 0; i < 1000; i++)
+        //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -1), 0xff00ff));
 
-        // this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -2, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
-        // this.drawTriangle(new Vertex(-1, 0, -1.5, 0xffffff), new Vertex(0, 1, -1, 0xffffff), new Vertex(1, 0.5, -1.5, 0xffffff))
-        // console.log(new Vector2(10, 0).cross(new Vector2(10, 10)));
+        for (let i = 0; i < 1000; i++)
+            this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -4), 0xffffff));
+
+
+        this.drawTriangle(
+            new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
+            new Vertex(new Vector3(-1, 1, -3), 0x000000, new Vector2(0, 0)),
+            new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)), spritesheet);
+        this.drawTriangle(
+            new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
+            new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)),
+            new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
+
+        this.drawTriangle(
+            new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
+            new Vertex(new Vector3(-1, 1, -5), 0x000000, new Vector2(0, 0)),
+            new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)));
+        this.drawTriangle(
+            new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
+            new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)),
+            new Vertex(new Vector3(1, -1, -2), 0xffffff, new Vector2(1, 1)));
+
+        this.drawLine(new Vertex(new Vector3(-7, 0, 2), 0xff0000), new Vertex(new Vector3(8, 0.0, -8), 0x00ff00));
+        this.drawLine(new Vertex(new Vector3(-3, 0, 1), 0x000000), new Vertex(new Vector3(2, 0.5, 2), 0xffffff));
     }
 
     drawPoint(v)
     {
-        let vp = this.playerTransform(v);
-        let sp = this.convertIntoScreenSpace(vp);
+        v.pos = this.playerTransform(v.pos);
 
-        if (sp != undefined) this.renderPixel(sp, vp.z);
+        if (v.pos.z < zClipNear) return;
+
+        let sx = int((v.pos.x / v.pos.z * FOV + WIDTH / 2.0));
+        let sy = int((v.pos.y / v.pos.z * FOV + HEIGHT / 2.0));
+
+        this.renderPixel(new Vector3(sx, sy, v.pos.z), v.color);
     }
 
     drawLine(v0, v1)
     {
-        let vp0 = this.playerTransform(v0);
-        let vp1 = this.playerTransform(v1);
+        let vp0 = this.playerTransform(v0.pos);
+        let vp1 = this.playerTransform(v1.pos);
+
+        vp0.color = v0.color;
+        vp1.color = v1.color;
 
         // z-Clipping
         if (vp0.z < zClipNear && vp1.z < zClipNear) return undefined;
 
         if (vp0.z < zClipNear)
         {
-            let r = (zClipNear - vp0.z) / (vp1.z - vp0.z);
-            vp0.z = vp0.z + (vp1.z - vp0.z) * r;
-            vp0.x = vp0.x + (vp1.x - vp0.x) * r;
-            vp0.y = vp0.y + (vp1.y - vp0.y) * r;
-            vp0.color = lerpVector2(vp0.color, vp1.color, r);
+            let per = (zClipNear - vp0.z) / (vp1.z - vp0.z);
+            vp0 = vp0.add(vp1.sub(vp0).mul(per));
+            vp0.color = lerpVector2(v0.color, v1.color, per);
         }
 
         if (vp1.z < zClipNear)
         {
-            let r = (zClipNear - vp1.z) / (vp0.z - vp1.z);
-            vp1.z = vp1.z + (vp0.z - vp1.z) * r;
-            vp1.x = vp1.x + (vp0.x - vp1.x) * r;
-            vp1.y = vp1.y + (vp0.y - vp1.y) * r;
-            vp1.color = lerpVector2(vp1.color, vp0.color, r);
+            let per = (zClipNear - vp1.z) / (vp0.z - vp1.z);
+            vp1 = vp1.add(vp0.sub(vp1).mul(per));
+            vp1.color = lerpVector2(v1.color, v0.color, per);
         }
 
         let p0 = new Vector2(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5);
@@ -390,10 +403,11 @@ class View extends Bitmap
                 let per = (x - p0.x) / (p1.x - p0.x);
 
                 let y = p0.y + (p1.y - p0.y) * per;
-                let z = vp0.z + (vp1.z - vp0.z) * per;
+                let z = 1 / ((1 - per) / vp0.z + per / vp1.z);
 
-                let c = lerpVector2(p0.color, p1.color, per);
-                this.renderPixel(new Vector2(x, y, z), c);
+                let c = lerp2AttributeVec3(vp0.color, vp1.color, (1 - per), per, vp0.z, vp1.z, z);
+
+                this.renderPixel(new Vector3(int(x), int(y), z), c);
             }
         }
         else
@@ -424,10 +438,10 @@ class View extends Bitmap
                 let per = (y - p0.y) / (p1.y - p0.y);
 
                 let x = p0.x + (p1.x - p0.x) * per;
-                let z = vp0.z + (vp1.z - vp0.z) * per;
+                let z = 1 / ((1 - per) / vp0.z + per / vp1.z);
 
-                let c = lerpVector2(p0.color, p1.color, per);
-                this.renderPixel(new Vector2(x, y, z), c);
+                let c = lerp2AttributeVec3(vp0.color, vp1.color, (1 - per), per, vp0.z, vp1.z, z);
+                this.renderPixel(new Vector3(int(x), int(y), z), c);
             }
         }
 
@@ -442,9 +456,9 @@ class View extends Bitmap
             tex.clear(0xff00ff);
         }
 
-        let vp0 = this.playerTransform(v0);
-        let vp1 = this.playerTransform(v1);
-        let vp2 = this.playerTransform(v2);
+        let vp0 = this.playerTransform(v0.pos);
+        let vp1 = this.playerTransform(v1.pos);
+        let vp2 = this.playerTransform(v2.pos);
 
         let z0 = vp0.z;
         let z1 = vp1.z;
@@ -495,13 +509,15 @@ class View extends Bitmap
 
                     let z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
 
-                    let t = lerpAttribute2(vp0.texCoord, vp1.texCoord, vp2.texCoord, w0, w1, w2, z0, z1, z2, z);
-                    // let c = lerpAttribute(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
+                    let t = lerp3AttributeVec2(v0.texCoord, v1.texCoord, v2.texCoord, w0, w1, w2, z0, z1, z2, z);
+                    // let c = lerpAttribute(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
 
                     let tx = Math.floor(tex.width * t.x);
                     let ty = Math.floor(tex.height * t.y);
 
+                    if (tx < 0) tx = 0;
                     if (tx >= tex.width) tx = tex.width - 1;
+                    if (ty < 0) ty = 0;
                     if (ty >= tex.height) ty = tex.height - 1;
 
                     let c = tex.pixels[tx + ty * tex.width];
@@ -512,29 +528,19 @@ class View extends Bitmap
         }
     }
 
-    playerTransform(p)
+    playerTransform(pos)
     {
         // Right-hand coordinate system
-        let ox = p.x - player.x;
-        let oy = p.y - player.y;
-        let oz = -p.z + player.z;
+        let ox = pos.x - player.pos.x;
+        let oy = pos.y - player.pos.y;
+        let oz = -pos.z + player.pos.z;
 
         // Combined XYZ Rotation
-        let xx = ox * (+player.cosY * player.cosZ) + oy * (-player.cosY * player.sinZ) + oz * (+player.sinY);
-        let yy = ox * (+player.sinX * player.sinY * player.cosZ + player.cosX * player.sinZ) + oy * (-player.sinX * player.sinY * player.sinZ + player.cosX * player.cosZ) + oz * (-player.sinX * player.cosY);
-        let zz = ox * (-player.cosX * player.sinY * player.cosZ + player.sinX * player.sinZ) + oy * (+player.cosX * player.sinY * player.sinZ + player.sinX * player.cosZ) + oz * (+player.cosX * player.cosY);
+        let xx = ox * (+player.cos.y * player.cos.z) + oy * (-player.cos.y * player.sin.z) + oz * (+player.sin.y);
+        let yy = ox * (+player.sin.x * player.sin.y * player.cos.z + player.cos.x * player.sin.z) + oy * (-player.sin.x * player.sin.y * player.sin.z + player.cos.x * player.cos.z) + oz * (-player.sin.x * player.cos.y);
+        let zz = ox * (-player.cos.x * player.sin.y * player.cos.z + player.sin.x * player.sin.z) + oy * (+player.cos.x * player.sin.y * player.sin.z + player.sin.x * player.cos.z) + oz * (+player.cos.x * player.cos.y);
 
-        return new Vertex(xx, yy, zz, p.color, p.texCoord);
-    }
-
-    convertIntoScreenSpace(p)
-    {
-        if (p.z < 0) return undefined;
-
-        let sx = int((p.x / p.z * FOV + WIDTH / 2.0));
-        let sy = int((p.y / p.z * FOV + HEIGHT / 2.0));
-
-        return new Vector2(sx, sy);
+        return new Vector3(xx, yy, zz);
     }
 
     renderPixel(p, c)
@@ -643,8 +649,6 @@ function init()
         view.pixels[i] = Math.random() * 0xffffff;
 
     player = new Player();
-
-
 }
 
 function run()
@@ -777,7 +781,17 @@ function lerpVector3(a, b, c, w0, w1, w2)
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
-function lerpAttribute2(a, b, c, w0, w1, w2, z0, z1, z2, z)
+function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
+{
+    let wa = a.mul(w0 / z0 * z);
+    let wb = b.mul(w1 / z1 * z);
+
+    let res = new Vector3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
+
+    return res;
+}
+
+function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
 {
     let wa = a.mul(w0 / z0 * z);
     let wb = b.mul(w1 / z1 * z);
@@ -788,7 +802,7 @@ function lerpAttribute2(a, b, c, w0, w1, w2, z0, z1, z2, z)
     return res;
 }
 
-function lerpAttribute3(a, b, c, w0, w1, w2, z0, z1, z2, z)
+function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
 {
     let wa = a.mul(w0 / z0 * z);
     let wb = b.mul(w1 / z1 * z);

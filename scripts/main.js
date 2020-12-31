@@ -1,6 +1,12 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 4;
+let SCALE = 8;
+
+const spriteSheetSize = 512;
+let spritesheet;
+
+const resourceReady = 1;
+let loadedResources = 0;
 
 let previousTime = 0;
 let passedTime = 0;
@@ -26,7 +32,7 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 let player;
 
 const FOV = HEIGHT / SCALE
-const zClip = 0.01;
+const zClipNear = 0.1;
 let backFaceCulling = false;
 
 /**
@@ -175,10 +181,9 @@ class Vector3
     }
 }
 
-
 class Vertex
 {
-    constructor(x, y, z, color)
+    constructor(x, y, z, color, texCoord)
     {
         this.x = x;
         this.y = y;
@@ -187,6 +192,9 @@ class Vertex
         if (typeof color == "number") this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
         else if (color == undefined) this.color = new Vector3(255, 0, 255);
         else this.color = color;
+
+        if(texCoord == undefined) this.texCoord = new Vector2(0, 0);
+        else this.texCoord = texCoord;
     }
 }
 
@@ -301,44 +309,20 @@ class View extends Bitmap
     {
     }
 
-    renderPerspective()
+    renderView()
     {
         for (let i = 0; i < this.zBuffer.length; i++)
             this.zBuffer[i] = 10000;
 
         let r = new Random(123);
 
-        // for (let i = 0; i < 2000; i++)
-        // {
-        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, 0, 0xffffff));
-        // }
-
-        // for (let i = 0; i < 2000; i++)
-        // {
-        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -3.5, 0x8080ff));
-        // }
-
-        for (let i = 0; i < 2000; i++)
-        {
-            this.drawPoint(new Vertex(r.nextFloat() * 1, r.nextFloat() * 1, -3, 0xf080f0));
-        }
-
-        // for (let i = 0; i < 2000; i++)
-        // {
-        //     this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, -1, r.nextFloat() * 1 - 0.5 - 1, 0x404040));
-        // }
-
-
-        // this.drawPoint(new Vertex(3, 0, 3));
-        // this.drawPoint(new Vertex(-3, 0, 3));
-        // this.drawPoint(new Vertex(3, 0, -3));
-        // this.drawPoint(new Vertex(-3, 0, -3));
+        this.drawTriangle(new Vertex(-1, -1, -3, 0x808080), new Vertex(-1, 1, -3, 0x000000), new Vertex(1, 1, -3, 0x808080));
+        this.drawTriangle(new Vertex(-1, -1, -3, 0x808080), new Vertex(1, 1, -3, 0x808080), new Vertex(1, -1, -3, 0xffffff));
 
         // this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
-
         // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
 
-        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -2, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        // this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -2, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
         // this.drawTriangle(new Vertex(-1, 0, -1.5, 0xffffff), new Vertex(0, 1, -1, 0xffffff), new Vertex(1, 0.5, -1.5, 0xffffff))
         // console.log(new Vector2(10, 0).cross(new Vector2(10, 10)));
     }
@@ -357,20 +341,20 @@ class View extends Bitmap
         let vp1 = this.playerTransform(v1);
 
         // z-Clipping
-        if (vp0.z < zClip && vp1.z < zClip) return undefined;
+        if (vp0.z < zClipNear && vp1.z < zClipNear) return undefined;
 
-        if (vp0.z < zClip)
+        if (vp0.z < zClipNear)
         {
-            let r = (zClip - vp0.z) / (vp1.z - vp0.z);
+            let r = (zClipNear - vp0.z) / (vp1.z - vp0.z);
             vp0.z = vp0.z + (vp1.z - vp0.z) * r;
             vp0.x = vp0.x + (vp1.x - vp0.x) * r;
             vp0.y = vp0.y + (vp1.y - vp0.y) * r;
             vp0.color = lerpVector2(vp0.color, vp1.color, r);
         }
 
-        if (vp1.z < zClip)
+        if (vp1.z < zClipNear)
         {
-            let r = (zClip - vp1.z) / (vp0.z - vp1.z);
+            let r = (zClipNear - vp1.z) / (vp0.z - vp1.z);
             vp1.z = vp1.z + (vp0.z - vp1.z) * r;
             vp1.x = vp1.x + (vp0.x - vp1.x) * r;
             vp1.y = vp1.y + (vp0.y - vp1.y) * r;
@@ -468,7 +452,7 @@ class View extends Bitmap
         let z1 = vp1.z;
         let z2 = vp2.z;
 
-        if (vp0.z < zClip && vp1.z < zClip && vp2.z < zClip) return;
+        if (vp0.z < zClipNear && vp1.z < zClipNear && vp2.z < zClipNear) return;
 
         let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
         let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5, vp1.color);
@@ -504,6 +488,7 @@ class View extends Bitmap
                 let w1 = v02.cross(p.sub(p2));
                 let w2 = v10.cross(p.sub(p0));
 
+                // Render Clock wise
                 if (w0 >= 0 && w1 >= 0 && w2 >= 0)
                 {
                     w0 /= area;
@@ -570,6 +555,20 @@ function start()
 function init()
 {
     cvs = document.getElementById("canvas");
+
+    const image = new Image();
+    image.src = "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/sprite.png";
+    image.crossOrigin = "Anonymous";
+    image.onload = () =>
+    {
+        // Loading sprite sheet.
+        gfx.drawImage(image, 0, 0);
+        spritesheet = gfx.getImageData(0, 0, spriteSheetSize, spriteSheetSize);
+        spritesheet = convertImageDataToBitmap(spritesheet, spriteSheetSize, spriteSheetSize);
+
+        loadedResources++;
+    }
+
     cvs.setAttribute("width", WIDTH + "px");
     cvs.setAttribute("height", HEIGHT + "px");
     gfx = cvs.getContext("2d");
@@ -634,6 +633,8 @@ function init()
         view.pixels[i] = Math.random() * 0xffffff;
 
     player = new Player();
+
+
 }
 
 function run()
@@ -644,7 +645,7 @@ function run()
 
     while (passedTime >= msPerFrame)
     {
-        if (!pause)
+        if (loadedResources == resourceReady && !pause)
         {
             update(passedTime / 1000.0);
             render();
@@ -660,7 +661,7 @@ function run()
                 frameCounter = 0;
             }
         }
-        else
+        else if(pause)
         {
             gfx.fillText("PAUSE", 4, 40);
         }
@@ -686,12 +687,31 @@ function render()
 {
     view.clear(0x808080);
 
-    view.renderPerspective();
+    view.renderView();
 
-    gfx.putImageData(convert(view, SCALE), 0, 0);
+    gfx.putImageData(convertBitmapToImageData(view, SCALE), 0, 0);
 }
 
-function convert(bitmap, scale)
+function convertImageDataToBitmap(imageData, width, height)
+{
+    let res = new Bitmap(width, height);
+
+    for (let y = 0; y < height; y++)
+    {
+        for (let x = 0; x < width; x++)
+        {
+            let r = imageData.data[(x + y * width) * 4];
+            let g = imageData.data[(x + y * width) * 4 + 1];
+            let b = imageData.data[(x + y * width) * 4 + 2];
+
+            res.pixels[x + y * width] = (r << 16) | (g << 8) | b;
+        }
+    }
+
+    return res;
+}
+
+function convertBitmapToImageData(bitmap, scale)
 {
     let res = new ImageData(bitmap.width * scale, bitmap.height * scale);
 
@@ -764,10 +784,3 @@ function converColor(v)
 }
 
 window.onload = start;
-
-// let img = new Image();
-// img.src = "./imgs/sprite.png";
-// img.onload = function ()
-// {
-//     // console.log(img);
-// }

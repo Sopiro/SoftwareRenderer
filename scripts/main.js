@@ -320,7 +320,7 @@ class View extends Bitmap
 
         for (let i = 0; i < 2000; i++)
         {
-            this.drawPoint(new Vertex(r.nextFloat() * 1, r.nextFloat() * 1, -2, 0xf080f0));
+            this.drawPoint(new Vertex(r.nextFloat() * 1, r.nextFloat() * 1, -3, 0xf080f0));
         }
 
         // for (let i = 0; i < 2000; i++)
@@ -338,8 +338,8 @@ class View extends Bitmap
 
         // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
 
-        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -3, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
-        this.drawTriangle(new Vertex(-1, 0, -3, 0xffffff), new Vertex(0, 1, -1, 0xffffff), new Vertex(1, 0.5, -3, 0xffffff))
+        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -2, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        // this.drawTriangle(new Vertex(-1, 0, -1.5, 0xffffff), new Vertex(0, 1, -1, 0xffffff), new Vertex(1, 0.5, -1.5, 0xffffff))
         // console.log(new Vector2(10, 0).cross(new Vector2(10, 10)));
     }
 
@@ -464,9 +464,9 @@ class View extends Bitmap
         let vp1 = this.playerTransform(v1);
         let vp2 = this.playerTransform(v2);
 
-        let oz0 = 1.0 / vp0.z;
-        let oz1 = 1.0 / vp1.z;
-        let oz2 = 1.0 / vp2.z;
+        let z0 = vp0.z;
+        let z1 = vp1.z;
+        let z2 = vp2.z;
 
         if (vp0.z < zClip && vp1.z < zClip && vp2.z < zClip) return;
 
@@ -510,8 +510,9 @@ class View extends Bitmap
                     w1 /= area;
                     w2 /= area;
 
-                    let z = 1.0 / (oz0 * w0 + oz1 * w1 + oz2 * w2);
-                    let c = lerpVector3(p0.color, p1.color, p2.color, w0, w1, w2);
+                    let z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
+
+                    let c = lerpAttribute(p0.color, p1.color, p2.color, w0, w1, w2, z0, z1, z2, z);
 
                     this.renderPixel(new Pixel(x, y, c), z);
                 }
@@ -744,6 +745,17 @@ function lerpVector3(a, b, c, w0, w1, w2)
     let wc = c.mul(w2);
 
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
+}
+
+function lerpAttribute(a, b, c, w0, w1, w2, z0, z1, z2, z)
+{
+    let wa = a.mul(w0 / z0 * z);
+    let wb = b.mul(w1 / z1 * z);
+    let wc = c.mul(w2 / z2 * z);
+
+    let res = new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
+
+    return res;
 }
 
 function converColor(v)

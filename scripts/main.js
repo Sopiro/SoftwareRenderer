@@ -198,18 +198,6 @@ class Vertex
     }
 }
 
-class Pixel
-{
-    constructor(x, y, color)
-    {
-        this.x = x;
-        this.y = y;
-        if (typeof (color) == "number") this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
-        else if (color == undefined) this.color = new Vector3(255, 0, 255);
-        else this.color = color;
-    }
-}
-
 class Player
 {
     constructor()
@@ -361,8 +349,8 @@ class View extends Bitmap
             vp1.color = lerpVector2(vp1.color, vp0.color, r);
         }
 
-        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
-        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5, vp1.color);
+        let p0 = new Vector2(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5);
+        let p1 = new Vector2(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5);
 
         // Render Left to Right
         if (p1.x < p0.x)
@@ -401,7 +389,7 @@ class View extends Bitmap
                 let z = vp0.z + (vp1.z - vp0.z) * per;
 
                 let c = lerpVector2(p0.color, p1.color, per);
-                this.renderPixel(new Pixel(int(x), int(y), c), z);
+                this.renderPixel(new Vector2(x, y, z), c);
             }
         }
         else
@@ -435,7 +423,7 @@ class View extends Bitmap
                 let z = vp0.z + (vp1.z - vp0.z) * per;
 
                 let c = lerpVector2(p0.color, p1.color, per);
-                this.renderPixel(new Pixel(int(x), int(y), c), z);
+                this.renderPixel(new Vector2(x, y, z), c);
             }
         }
 
@@ -454,9 +442,9 @@ class View extends Bitmap
 
         if (vp0.z < zClipNear && vp1.z < zClipNear && vp2.z < zClipNear) return;
 
-        let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
-        let p1 = new Pixel(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5, vp1.color);
-        let p2 = new Pixel(vp2.x / vp2.z * FOV + WIDTH / 2.0 - 0.5, vp2.y / vp2.z * FOV + HEIGHT / 2.0 - 0.5, vp2.color);
+        let p0 = new Vector2(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5);
+        let p1 = new Vector2(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5);
+        let p2 = new Vector2(vp2.x / vp2.z * FOV + WIDTH / 2.0 - 0.5, vp2.y / vp2.z * FOV + HEIGHT / 2.0 - 0.5);
 
         let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
         let maxX = Math.ceil(Math.max(p0.x, p1.x, p2.x));
@@ -497,9 +485,9 @@ class View extends Bitmap
 
                     let z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
 
-                    let c = lerpAttribute(p0.color, p1.color, p2.color, w0, w1, w2, z0, z1, z2, z);
+                    let c = lerpAttribute(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
 
-                    this.renderPixel(new Pixel(x, y, c), z);
+                    this.renderPixel(new Vector3(x, y, z), c);
                 }
             }
         }
@@ -517,7 +505,7 @@ class View extends Bitmap
         let yy = ox * (+player.sinX * player.sinY * player.cosZ + player.cosX * player.sinZ) + oy * (-player.sinX * player.sinY * player.sinZ + player.cosX * player.cosZ) + oz * (-player.sinX * player.cosY);
         let zz = ox * (-player.cosX * player.sinY * player.cosZ + player.sinX * player.sinZ) + oy * (+player.cosX * player.sinY * player.sinZ + player.sinX * player.cosZ) + oz * (+player.cosX * player.cosY);
 
-        return new Vertex(xx, yy, zz, p.color);
+        return new Vertex(xx, yy, zz, p.color, p.texCoord);
     }
 
     convertIntoScreenSpace(p)
@@ -527,15 +515,15 @@ class View extends Bitmap
         let sx = int((p.x / p.z * FOV + WIDTH / 2.0));
         let sy = int((p.y / p.z * FOV + HEIGHT / 2.0));
 
-        return new Pixel(sx, sy, p.color);
+        return new Vector2(sx, sy);
     }
 
-    renderPixel(p, z)
+    renderPixel(p, c)
     {
-        if (!this.checkOutOfScreen(p) && z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
+        if (!this.checkOutOfScreen(p) && p.z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
         {
-            this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = converColor(p.color);
-            this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = z;
+            this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = converColor(c);
+            this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = p.z;
         }
     }
 
@@ -557,7 +545,7 @@ function init()
     cvs = document.getElementById("canvas");
 
     const image = new Image();
-    image.src = "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/sprite.png";
+    image.src = "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/spritesheet.png";
     image.crossOrigin = "Anonymous";
     image.onload = () =>
     {

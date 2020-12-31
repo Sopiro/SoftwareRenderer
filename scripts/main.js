@@ -1,6 +1,6 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 8;
+let SCALE = 4;
 
 let previousTime = 0;
 let passedTime = 0;
@@ -320,7 +320,7 @@ class View extends Bitmap
 
         for (let i = 0; i < 2000; i++)
         {
-            this.drawPoint(new Vertex(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -5, 0xf080f0));
+            this.drawPoint(new Vertex(r.nextFloat() * 1, r.nextFloat() * 1, -2, 0xf080f0));
         }
 
         // for (let i = 0; i < 2000; i++)
@@ -334,11 +334,12 @@ class View extends Bitmap
         // this.drawPoint(new Vertex(3, 0, -3));
         // this.drawPoint(new Vertex(-3, 0, -3));
 
-        this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
+        // this.drawLine(new Vertex(-3, 0, -1, 0xff0000), new Vertex(2, 0.5, -2, 0x00ff00));
 
         // this.drawLine(new Vertex(-3, 0, 1, 0x000000), new Vertex(2, 0.5, 2, 0xffffff));
 
-        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -1, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        this.drawTriangle(new Vertex(-1, 0, -1, 0xff0000), new Vertex(0, 1, -3, 0x00ff00), new Vertex(1, 0.5, -1, 0x0000ff))
+        this.drawTriangle(new Vertex(-1, 0, -3, 0xffffff), new Vertex(0, 1, -1, 0xffffff), new Vertex(1, 0.5, -3, 0xffffff))
         // console.log(new Vector2(10, 0).cross(new Vector2(10, 10)));
     }
 
@@ -463,6 +464,10 @@ class View extends Bitmap
         let vp1 = this.playerTransform(v1);
         let vp2 = this.playerTransform(v2);
 
+        let oz0 = 1.0 / vp0.z;
+        let oz1 = 1.0 / vp1.z;
+        let oz2 = 1.0 / vp2.z;
+
         if (vp0.z < zClip && vp1.z < zClip && vp2.z < zClip) return;
 
         let p0 = new Pixel(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5, vp0.color);
@@ -505,8 +510,10 @@ class View extends Bitmap
                     w1 /= area;
                     w2 /= area;
 
+                    let z = 1.0 / (oz0 * w0 + oz1 * w1 + oz2 * w2);
                     let c = lerpVector3(p0.color, p1.color, p2.color, w0, w1, w2);
-                    this.renderPixel(new Pixel(x, y, c), -10);
+
+                    this.renderPixel(new Pixel(x, y, c), z);
                 }
             }
         }

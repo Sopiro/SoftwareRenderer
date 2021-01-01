@@ -3,4 +3,4 @@
 Playable at: https://sopiro.github.io/js_bitmap_renderer/
 
 ## 20201227 current status
-![image](.github/bdbaf6b.gif)
+![image](.github/f9135e4.gif)

@@ -6,9 +6,13 @@ let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
 
 const spriteSheetSize = 512;
-let pepe;
+let textures =
+{
+    pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", 512, 512],
+    dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", 256, 256]
+};
 
-const resourceReady = 1;
+const resourceReady = Object.keys(textures).length;;
 let loadedResources = 0;
 
 let previousTime = 0;
@@ -35,8 +39,6 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 let player;
 
 let backFaceCulling = false;
-let defaultTex0;
-let defaultTex1;
 
 /**
  * Creates a pseudo-random value generator. The seed must be an integer.
@@ -222,7 +224,7 @@ class Player
 
         this.speed = 3.0;
 
-        if(keys.shift) this.speed = 6.0;
+        if (keys.shift) this.speed = 6.0;
 
         let ax = 0.0;
         let az = 0.0;
@@ -239,13 +241,13 @@ class Player
         if (keys.c) this.pos.y -= this.speed * delta;
         if (keys.q) this.rot.y -= this.rotSpeed * delta;
         if (keys.e) this.rot.y += this.rotSpeed * delta;
-        
+
         if (mouse.down)
         {
             this.rot.y += mouse.dx * 0.1 * this.rotSpeed * delta;
             this.rot.x += mouse.dy * 0.1 * this.rotSpeed * delta;
         }
-        }
+    }
 }
 
 class Bitmap
@@ -322,14 +324,18 @@ class View extends Bitmap
         //     new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
 
         const s = 30.0;
+        let tex;
         for (let i = 0; i < 100; i++)
         {
-            this.drawCube(new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0), new Vector3(1, 1, 1), pepe, true);
+            if (i % 2 == 0) tex = textures.pepe;
+            else tex = textures.dulri;
+
+            this.drawCube(new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0), new Vector3(1, 1, 1), tex, true);
         }
 
         this.drawPoint(new Vertex(new Vector3(0, 0, -1), 0xff00ff));
-        // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
-        // this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), pepe, true);
+        this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
+        // this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), textures.pepe, true);
     }
 
     drawPoint(v)
@@ -453,7 +459,7 @@ class View extends Bitmap
 
     drawTriangle(v0, v1, v2, tex)
     {
-        if (tex == undefined) tex = defaultTex0;
+        if (tex == undefined) tex = textures.sample0;
 
         v0.pos = this.playerTransform(v0.pos);
         v1.pos = this.playerTransform(v1.pos);
@@ -663,17 +669,28 @@ function init()
 {
     cvs = document.getElementById("canvas");
 
-    const image = new Image();
-    image.src = "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png";
-    image.crossOrigin = "Anonymous";
-    image.onload = () =>
+    for (const key in textures)
     {
-        // Loading sprite sheet.
-        gfx.drawImage(image, 0, 0);
-        pepe = gfx.getImageData(0, 0, spriteSheetSize, spriteSheetSize);
-        pepe = convertImageDataToBitmap(pepe, spriteSheetSize, spriteSheetSize);
+        if (Object.hasOwnProperty.call(textures, key))
+        {
+            const imageURL = textures[key][0];
+            const imageWidth = textures[key][1];
+            const imageHeight = textures[key][2];
 
-        loadedResources++;
+            let image = new Image();
+            image.src = imageURL;
+            image.crossOrigin = "Anonymous";
+            image.onload = () =>
+            {
+                // Loading textures.
+                gfx.drawImage(image, 0, 0);
+                image = gfx.getImageData(0, 0, imageWidth, imageHeight);
+                image = convertImageDataToBitmap(image, imageWidth, imageHeight);
+
+                textures[key] = image;
+                loadedResources++;
+            }
+        }
     }
 
     cvs.setAttribute("width", WIDTH + "px");
@@ -740,16 +757,20 @@ function init()
     for (let i = 0; i < WIDTH * HEIGHT; i++)
         view.pixels[i] = Math.random() * 0xffffff;
 
-    defaultTex0 = new Bitmap(64, 64);
+    let sample = new Bitmap(64, 64);
     for (let i = 0; i < 64 * 64; i++)
     {
         const x = i % 64;
         const y = int(i / 64);
-        defaultTex0.pixels[i] = (((x << 6) % 0xff) << 8) | (y << 6) % 0xff;
+        sample.pixels[i] = (((x << 6) % 0xff) << 8) | (y << 6) % 0xff;
     }
 
-    defaultTex1 = new Bitmap(64, 64);
-    defaultTex1.clear(0xff00ff);
+    textures["sample0"] = sample;
+
+    sample = new Bitmap(64, 64);
+    sample.clear(0xff00ff);
+
+    textures["sample1"] = sample;
 
     player = new Player();
 }

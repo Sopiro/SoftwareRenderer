@@ -3,10 +3,10 @@ let HEIGHT = WIDTH / 4 * 3;
 let SCALE = 4;
 
 let FOV = HEIGHT / SCALE
-let zClipNear = 1.0;
+let zClipNear = 0.2;
 
 const spriteSheetSize = 512;
-let spritesheet;
+let pepe;
 
 const resourceReady = 1;
 let loadedResources = 0;
@@ -29,7 +29,7 @@ let time = 0;
 
 let view;
 
-let keys = { up: false, down: false, left: false, right: false, q: false, e: false };
+let keys = {};
 let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0.0, dy: 0.0 };
 
 let player;
@@ -202,7 +202,7 @@ class Player
 {
     constructor()
     {
-        this.speed = 1.0;
+        this.speed = 3.0;
         this.rotSpeed = 60.0;
 
         this.pos = new Vector3(0.0, 0.0, 0.0);
@@ -220,6 +220,10 @@ class Player
 
         // Right hand coordinate system
 
+        this.speed = 3.0;
+
+        if(keys.shift) this.speed = 6.0;
+
         let ax = 0.0;
         let az = 0.0;
 
@@ -232,16 +236,16 @@ class Player
         this.pos.z += (-this.sin.y * ax + this.cos.y * az) * this.speed * delta;
 
         if (keys.space) this.pos.y += this.speed * delta;
-        if (keys.ctrl) this.pos.y -= this.speed * delta;
+        if (keys.c) this.pos.y -= this.speed * delta;
         if (keys.q) this.rot.y -= this.rotSpeed * delta;
         if (keys.e) this.rot.y += this.rotSpeed * delta;
-
+        
         if (mouse.down)
         {
             this.rot.y += mouse.dx * 0.1 * this.rotSpeed * delta;
             this.rot.x += mouse.dy * 0.1 * this.rotSpeed * delta;
         }
-    }
+        }
 }
 
 class Bitmap
@@ -307,39 +311,37 @@ class View extends Bitmap
         //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -4), 0xffffff));
 
 
-        this.drawTriangle(
-            new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
-            new Vertex(new Vector3(-1, 1, -3), 0x000000, new Vector2(0, 0)),
-            new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)), spritesheet);
+        // this.drawTriangle(
+        //     new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
+        //     new Vertex(new Vector3(-1, 1, -3), 0x000000, new Vector2(0, 0)),
+        //     new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)), spritesheet);
 
         // this.drawTriangle(
         //     new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
         //     new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)),
         //     new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
 
-        // this.drawTriangle(
-        //     new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
-        //     new Vertex(new Vector3(-1, 1, -5), 0x000000, new Vector2(0, 0)),
-        //     new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)));
-        // this.drawTriangle(
-        //     new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
-        //     new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)),
-        //     new Vertex(new Vector3(1, -1, -2), 0xffffff, new Vector2(1, 1)));
+        const s = 30.0;
+        for (let i = 0; i < 100; i++)
+        {
+            this.drawCube(new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0), new Vector3(1, 1, 1), pepe, true);
+        }
 
-        this.drawLine(new Vertex(new Vector3(-7, 0, 2), 0xff0000), new Vertex(new Vector3(8, 0.0, -8), 0x00ff00));
-        this.drawLine(new Vertex(new Vector3(-3, 0, 1), 0x000000), new Vertex(new Vector3(2, 0.5, 2), 0xffffff));
+        this.drawPoint(new Vertex(new Vector3(0, 0, -1), 0xff00ff));
+        // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
+        // this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), pepe, true);
     }
 
     drawPoint(v)
     {
-        let vp = this.playerTransform(v.pos);
+        v.pos = this.playerTransform(v.pos);
 
         if (v.pos.z < zClipNear) return;
 
-        let sx = int((vp.x / vp.z * FOV + WIDTH / 2.0));
-        let sy = int((vp.y / vp.z * FOV + HEIGHT / 2.0));
+        const sx = int((v.pos.x / v.pos.z * FOV + WIDTH / 2.0));
+        const sy = int((v.pos.y / v.pos.z * FOV + HEIGHT / 2.0));
 
-        this.renderPixel(new Vector3(sx, sy, vp.z), v.color);
+        this.renderPixel(new Vector3(sx, sy, v.pos.z), v.color);
     }
 
     drawLine(v0, v1)
@@ -451,14 +453,18 @@ class View extends Bitmap
 
     drawTriangle(v0, v1, v2, tex)
     {
-        if (tex == undefined)
-            tex = defaultTex0;
+        if (tex == undefined) tex = defaultTex0;
 
         v0.pos = this.playerTransform(v0.pos);
         v1.pos = this.playerTransform(v1.pos);
         v2.pos = this.playerTransform(v2.pos);
 
         if (v0.pos.z < zClipNear && v1.pos.z < zClipNear && v2.pos.z < zClipNear) return;
+        else if (v0.pos.z > zClipNear && v1.pos.z > zClipNear && v2.pos.z > zClipNear)
+        {
+            this.drawTriangleVS(v0, v1, v2, tex);
+            return;
+        }
 
         const vps = [v0, v1, v2, v0];
         let drawVertices = [];
@@ -494,10 +500,10 @@ class View extends Bitmap
         switch (drawVertices.length)
         {
             case 3:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], defaultTex1)
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], tex)
                 break;
             case 4:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], defaultTex0)
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], tex)
                 this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3], tex)
                 break;
         }
@@ -571,6 +577,49 @@ class View extends Bitmap
         }
     }
 
+    drawIndex(vertices, indices)
+    {
+    }
+
+    drawCube(pos, size, tex, centered)
+    {
+        if (centered == true)
+            pos = pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
+
+        const p000 = new Vector3(pos.x, pos.y, pos.z);
+        const p100 = new Vector3(pos.x + size.x, pos.y, pos.z);
+        const p110 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z);
+        const p010 = new Vector3(pos.x, pos.y + size.y, pos.z);
+
+        const p001 = new Vector3(pos.x, pos.y, pos.z - size.z);
+        const p101 = new Vector3(pos.x + size.x, pos.y, pos.z - size.z);
+        const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
+        const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
+
+        const t00 = new Vector2(0, 0);
+        const t10 = new Vector2(1, 0);
+        const t11 = new Vector2(1, 1);
+        const t01 = new Vector2(0, 1);
+
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11), tex);
+
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p111, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11), tex);
+
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p011, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11), tex);
+
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p010, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), tex);
+
+        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p110, 0xffffff, t11), tex);
+
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p101, 0xffffff, t00), new Vertex(p001, 0xffffff, t10), tex);
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p001, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), tex);
+    }
+
     playerTransform(pos)
     {
         // Right-hand coordinate system
@@ -621,8 +670,8 @@ function init()
     {
         // Loading sprite sheet.
         gfx.drawImage(image, 0, 0);
-        spritesheet = gfx.getImageData(0, 0, spriteSheetSize, spriteSheetSize);
-        spritesheet = convertImageDataToBitmap(spritesheet, spriteSheetSize, spriteSheetSize);
+        pepe = gfx.getImageData(0, 0, spriteSheetSize, spriteSheetSize);
+        pepe = convertImageDataToBitmap(pepe, spriteSheetSize, spriteSheetSize);
 
         loadedResources++;
     }
@@ -654,9 +703,10 @@ function init()
         if (e.key == "s" || e.key == "ArrowDown") keys.down = true;
         if (e.key == "d" || e.key == "ArrowRight") keys.right = true;
         if (e.key == " ") keys.space = true;
-        if (e.key == "Control") keys.ctrl = true;
+        if (e.key == "c") keys.c = true;
         if (e.key == "q") keys.q = true;
         if (e.key == "e") keys.e = true;
+        if (e.key == "Shift") keys.shift = true;
     });
 
     window.addEventListener("keyup", (e) =>
@@ -666,9 +716,10 @@ function init()
         if (e.key == "s" || e.key == "ArrowDown") keys.down = false;
         if (e.key == "d" || e.key == "ArrowRight") keys.right = false;
         if (e.key == " ") keys.space = false;
-        if (e.key == "Control") keys.ctrl = false;
+        if (e.key == "c") keys.c = false;
         if (e.key == "q") keys.q = false;
         if (e.key == "e") keys.e = false;
+        if (e.key == "Shift") keys.shift = false;
     });
 
     window.addEventListener("mousemove", (e) =>

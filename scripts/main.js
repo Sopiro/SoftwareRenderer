@@ -2,6 +2,9 @@ let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
 let SCALE = 4;
 
+let FOV = HEIGHT / SCALE
+let zClipNear = 1.0;
+
 const spriteSheetSize = 512;
 let spritesheet;
 
@@ -31,9 +34,9 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 
 let player;
 
-const FOV = HEIGHT / SCALE
-const zClipNear = 0.01;
 let backFaceCulling = false;
+let defaultTex0;
+let defaultTex1;
 
 /**
  * Creates a pseudo-random value generator. The seed must be an integer.
@@ -55,7 +58,6 @@ Random.prototype.next = function ()
     return this._seed = this._seed * 16807 % 2147483647;
 };
 
-
 /**
  * Returns a pseudo-random floating point number in range [0, 1).
  */
@@ -75,7 +77,7 @@ class Vector2
 
     normalize()
     {
-        let len = this.getLength();
+        const len = this.getLength();
 
         this.x /= len;
         this.y /= len;
@@ -133,7 +135,7 @@ class Vector3
 
     normalize()
     {
-        let len = this.getLength();
+        const len = this.getLength();
 
         this.x /= len;
         this.y /= len;
@@ -200,7 +202,7 @@ class Player
 {
     constructor()
     {
-        this.speed = 3.0;
+        this.speed = 1.0;
         this.rotSpeed = 60.0;
 
         this.pos = new Vector3(0.0, 0.0, 0.0);
@@ -264,7 +266,7 @@ class Bitmap
                 if (xx < 0 || xx >= this.width)
                     continue;
 
-                let color = bitmap.pixels[x + y * bitmap.width];
+                const color = bitmap.pixels[x + y * bitmap.width];
 
                 this.pixels[xx + yy * this.width] = color;
             }
@@ -296,34 +298,33 @@ class View extends Bitmap
         for (let i = 0; i < this.zBuffer.length; i++)
             this.zBuffer[i] = 10000;
 
-        let r = new Random(123);
-
-        // this.drawPoint(new Vertex(new Vector3(1, 1, -1), 0xff00ff));
+        const r = new Random(123);
 
         // for (let i = 0; i < 1000; i++)
         //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -1), 0xff00ff));
 
-        for (let i = 0; i < 1000; i++)
-            this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -4), 0xffffff));
+        // for (let i = 0; i < 1000; i++)
+        //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -4), 0xffffff));
 
 
         this.drawTriangle(
             new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
             new Vertex(new Vector3(-1, 1, -3), 0x000000, new Vector2(0, 0)),
             new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)), spritesheet);
-        this.drawTriangle(
-            new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
-            new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)),
-            new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
 
-        this.drawTriangle(
-            new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
-            new Vertex(new Vector3(-1, 1, -5), 0x000000, new Vector2(0, 0)),
-            new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)));
-        this.drawTriangle(
-            new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
-            new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)),
-            new Vertex(new Vector3(1, -1, -2), 0xffffff, new Vector2(1, 1)));
+        // this.drawTriangle(
+        //     new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
+        //     new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)),
+        //     new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
+
+        // this.drawTriangle(
+        //     new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
+        //     new Vertex(new Vector3(-1, 1, -5), 0x000000, new Vector2(0, 0)),
+        //     new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)));
+        // this.drawTriangle(
+        //     new Vertex(new Vector3(-1, -1, -2), 0x808080, new Vector2(0, 1)),
+        //     new Vertex(new Vector3(1, 1, -5), 0x808080, new Vector2(1, 0)),
+        //     new Vertex(new Vector3(1, -1, -2), 0xffffff, new Vector2(1, 1)));
 
         this.drawLine(new Vertex(new Vector3(-7, 0, 2), 0xff0000), new Vertex(new Vector3(8, 0.0, -8), 0x00ff00));
         this.drawLine(new Vertex(new Vector3(-3, 0, 1), 0x000000), new Vertex(new Vector3(2, 0.5, 2), 0xffffff));
@@ -331,14 +332,14 @@ class View extends Bitmap
 
     drawPoint(v)
     {
-        v.pos = this.playerTransform(v.pos);
+        let vp = this.playerTransform(v.pos);
 
         if (v.pos.z < zClipNear) return;
 
-        let sx = int((v.pos.x / v.pos.z * FOV + WIDTH / 2.0));
-        let sy = int((v.pos.y / v.pos.z * FOV + HEIGHT / 2.0));
+        let sx = int((vp.x / vp.z * FOV + WIDTH / 2.0));
+        let sy = int((vp.y / vp.z * FOV + HEIGHT / 2.0));
 
-        this.renderPixel(new Vector3(sx, sy, v.pos.z), v.color);
+        this.renderPixel(new Vector3(sx, sy, vp.z), v.color);
     }
 
     drawLine(v0, v1)
@@ -451,24 +452,66 @@ class View extends Bitmap
     drawTriangle(v0, v1, v2, tex)
     {
         if (tex == undefined)
+            tex = defaultTex0;
+
+        v0.pos = this.playerTransform(v0.pos);
+        v1.pos = this.playerTransform(v1.pos);
+        v2.pos = this.playerTransform(v2.pos);
+
+        if (v0.pos.z < zClipNear && v1.pos.z < zClipNear && v2.pos.z < zClipNear) return;
+
+        const vps = [v0, v1, v2, v0];
+        let drawVertices = [];
+
+        for (let i = 0; i < 3; i++)
         {
-            tex = new Bitmap(64, 64);
-            tex.clear(0xff00ff);
+            const cv = vps[i];
+            const nv = vps[i + 1];
+
+            const cvToNear = cv.pos.z - zClipNear;
+            const nvToNear = nv.pos.z - zClipNear;
+
+            if (cvToNear < 0 && nvToNear < 0) continue;
+
+            // If the edge intersects with z-Near plane
+            if (cvToNear * nvToNear < 0)
+            {
+                const per = (zClipNear - cv.pos.z) / (nv.pos.z - cv.pos.z);
+
+                const clippedPos = cv.pos.add(nv.pos.sub(cv.pos).mul(per));
+                const clippedCol = cv.color.add(nv.color.sub(cv.color).mul(per));
+                const clippedTxC = cv.texCoord.add(nv.texCoord.sub(cv.texCoord).mul(per));
+
+                if (cvToNear > 0) drawVertices.push(cv);
+                drawVertices.push(new Vertex(clippedPos, clippedCol, clippedTxC));
+            }
+            else
+            {
+                drawVertices.push(cv);
+            }
         }
 
-        let vp0 = this.playerTransform(v0.pos);
-        let vp1 = this.playerTransform(v1.pos);
-        let vp2 = this.playerTransform(v2.pos);
+        switch (drawVertices.length)
+        {
+            case 3:
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], defaultTex1)
+                break;
+            case 4:
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], defaultTex0)
+                this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3], tex)
+                break;
+        }
+    }
 
-        let z0 = vp0.z;
-        let z1 = vp1.z;
-        let z2 = vp2.z;
+    drawTriangleVS(vp0, vp1, vp2, tex)
+    {
+        const z0 = vp0.pos.z;
+        const z1 = vp1.pos.z;
+        const z2 = vp2.pos.z;
 
-        if (vp0.z < zClipNear && vp1.z < zClipNear && vp2.z < zClipNear) return;
-
-        let p0 = new Vector2(vp0.x / vp0.z * FOV + WIDTH / 2.0 - 0.5, vp0.y / vp0.z * FOV + HEIGHT / 2.0 - 0.5);
-        let p1 = new Vector2(vp1.x / vp1.z * FOV + WIDTH / 2.0 - 0.5, vp1.y / vp1.z * FOV + HEIGHT / 2.0 - 0.5);
-        let p2 = new Vector2(vp2.x / vp2.z * FOV + WIDTH / 2.0 - 0.5, vp2.y / vp2.z * FOV + HEIGHT / 2.0 - 0.5);
+        const p0 = new Vector2(vp0.pos.x / vp0.pos.z * FOV + WIDTH / 2.0 - 0.5, vp0.pos.y / vp0.pos.z * FOV + HEIGHT / 2.0 - 0.5);
+        const p1 = new Vector2(vp1.pos.x / vp1.pos.z * FOV + WIDTH / 2.0 - 0.5, vp1.pos.y / vp1.pos.z * FOV + HEIGHT / 2.0 - 0.5);
+        const p2 = new Vector2(vp2.pos.x / vp2.pos.z * FOV + WIDTH / 2.0 - 0.5, vp2.pos.y / vp2.pos.z * FOV + HEIGHT / 2.0 - 0.5);
 
         let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
         let maxX = Math.ceil(Math.max(p0.x, p1.x, p2.x));
@@ -480,12 +523,12 @@ class View extends Bitmap
         if (maxX > WIDTH) maxX = WIDTH;
         if (maxY > HEIGHT) maxY = HEIGHT;
 
-        let v10 = new Vector2(p1.x - p0.x, p1.y - p0.y);
-        let v21 = new Vector2(p2.x - p1.x, p2.y - p1.y);
-        let v02 = new Vector2(p0.x - p2.x, p0.y - p2.y);
-        let v20 = new Vector2(p2.x - p0.x, p2.y - p0.y);
+        const v10 = new Vector2(p1.x - p0.x, p1.y - p0.y);
+        const v21 = new Vector2(p2.x - p1.x, p2.y - p1.y);
+        const v02 = new Vector2(p0.x - p2.x, p0.y - p2.y);
+        const v20 = new Vector2(p2.x - p0.x, p2.y - p0.y);
 
-        let area = v10.cross(v20);
+        const area = v10.cross(v20);
 
         // Culling back faces
         if (area < 0) return;
@@ -507,9 +550,9 @@ class View extends Bitmap
                     w1 /= area;
                     w2 /= area;
 
-                    let z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
+                    const z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
 
-                    let t = lerp3AttributeVec2(v0.texCoord, v1.texCoord, v2.texCoord, w0, w1, w2, z0, z1, z2, z);
+                    const t = lerp3AttributeVec2(vp0.texCoord, vp1.texCoord, vp2.texCoord, w0, w1, w2, z0, z1, z2, z);
                     // let c = lerpAttribute(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
 
                     let tx = Math.floor(tex.width * t.x);
@@ -520,7 +563,7 @@ class View extends Bitmap
                     if (ty < 0) ty = 0;
                     if (ty >= tex.height) ty = tex.height - 1;
 
-                    let c = tex.pixels[tx + ty * tex.width];
+                    const c = tex.pixels[tx + ty * tex.width];
 
                     this.renderPixel(new Vector3(x, y, z), c);
                 }
@@ -531,14 +574,14 @@ class View extends Bitmap
     playerTransform(pos)
     {
         // Right-hand coordinate system
-        let ox = pos.x - player.pos.x;
-        let oy = pos.y - player.pos.y;
-        let oz = -pos.z + player.pos.z;
+        const ox = pos.x - player.pos.x;
+        const oy = pos.y - player.pos.y;
+        const oz = -pos.z + player.pos.z;
 
         // Combined XYZ Rotation
-        let xx = ox * (+player.cos.y * player.cos.z) + oy * (-player.cos.y * player.sin.z) + oz * (+player.sin.y);
-        let yy = ox * (+player.sin.x * player.sin.y * player.cos.z + player.cos.x * player.sin.z) + oy * (-player.sin.x * player.sin.y * player.sin.z + player.cos.x * player.cos.z) + oz * (-player.sin.x * player.cos.y);
-        let zz = ox * (-player.cos.x * player.sin.y * player.cos.z + player.sin.x * player.sin.z) + oy * (+player.cos.x * player.sin.y * player.sin.z + player.sin.x * player.cos.z) + oz * (+player.cos.x * player.cos.y);
+        const xx = ox * (+player.cos.y * player.cos.z) + oy * (-player.cos.y * player.sin.z) + oz * (+player.sin.y);
+        const yy = ox * (+player.sin.x * player.sin.y * player.cos.z + player.cos.x * player.sin.z) + oy * (-player.sin.x * player.sin.y * player.sin.z + player.cos.x * player.cos.z) + oz * (-player.sin.x * player.cos.y);
+        const zz = ox * (-player.cos.x * player.sin.y * player.cos.z + player.sin.x * player.sin.z) + oy * (+player.cos.x * player.sin.y * player.sin.z + player.sin.x * player.cos.z) + oz * (+player.cos.x * player.cos.y);
 
         return new Vector3(xx, yy, zz);
     }
@@ -547,8 +590,7 @@ class View extends Bitmap
     {
         if (!this.checkOutOfScreen(p) && p.z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
         {
-            if (typeof c != "number")
-                c = convertColor(c);
+            if (typeof c != "number") c = convertColor(c);
 
             this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = c;
             this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = p.z;
@@ -605,8 +647,7 @@ function init()
 
     window.addEventListener("keydown", (e) =>
     {
-        if (e.key == "Escape")
-            pause = !pause;
+        if (e.key == "Escape") pause = !pause;
 
         if (e.key == "w" || e.key == "ArrowUp") keys.up = true;
         if (e.key == "a" || e.key == "ArrowLeft") keys.left = true;
@@ -648,12 +689,23 @@ function init()
     for (let i = 0; i < WIDTH * HEIGHT; i++)
         view.pixels[i] = Math.random() * 0xffffff;
 
+    defaultTex0 = new Bitmap(64, 64);
+    for (let i = 0; i < 64 * 64; i++)
+    {
+        const x = i % 64;
+        const y = int(i / 64);
+        defaultTex0.pixels[i] = (((x << 6) % 0xff) << 8) | (y << 6) % 0xff;
+    }
+
+    defaultTex1 = new Bitmap(64, 64);
+    defaultTex1.clear(0xff00ff);
+
     player = new Player();
 }
 
 function run()
 {
-    let currentTime = new Date().getTime();
+    const currentTime = new Date().getTime();
     passedTime += currentTime - previousTime;
     previousTime = currentTime;
 
@@ -708,15 +760,15 @@ function render()
 
 function convertImageDataToBitmap(imageData, width, height)
 {
-    let res = new Bitmap(width, height);
+    const res = new Bitmap(width, height);
 
     for (let y = 0; y < height; y++)
     {
         for (let x = 0; x < width; x++)
         {
-            let r = imageData.data[(x + y * width) * 4];
-            let g = imageData.data[(x + y * width) * 4 + 1];
-            let b = imageData.data[(x + y * width) * 4 + 2];
+            const r = imageData.data[(x + y * width) * 4];
+            const g = imageData.data[(x + y * width) * 4 + 1];
+            const b = imageData.data[(x + y * width) * 4 + 2];
 
             res.pixels[x + y * width] = (r << 16) | (g << 8) | b;
         }
@@ -727,23 +779,23 @@ function convertImageDataToBitmap(imageData, width, height)
 
 function convertBitmapToImageData(bitmap, scale)
 {
-    let res = new ImageData(bitmap.width * scale, bitmap.height * scale);
+    const res = new ImageData(bitmap.width * scale, bitmap.height * scale);
 
     for (let y = 0; y < bitmap.height; y++)
     {
         for (let x = 0; x < bitmap.width; x++)
         {
-            let bitmapPixel = bitmap.pixels[x + y * bitmap.width]
+            const bitmapPixel = bitmap.pixels[x + y * bitmap.width]
 
-            let r = (bitmapPixel >> 16) & 0xff;
-            let g = (bitmapPixel >> 8) & 0xff;
-            let b = bitmapPixel & 0xff;
+            const r = (bitmapPixel >> 16) & 0xff;
+            const g = (bitmapPixel >> 8) & 0xff;
+            const b = bitmapPixel & 0xff;
 
             for (let ys = 0; ys < SCALE; ys++)
             {
                 for (let xs = 0; xs < SCALE; xs++)
                 {
-                    let ptr = ((x * SCALE) + xs + ((y * SCALE) + ys) * res.width) * 4;
+                    const ptr = ((x * SCALE) + xs + ((y * SCALE) + ys) * res.width) * 4;
 
                     res.data[ptr] = r;
                     res.data[ptr + 1] = g;
@@ -774,43 +826,37 @@ function lerpVector2(a, b, per)
 
 function lerpVector3(a, b, c, w0, w1, w2)
 {
-    let wa = a.mul(w0);
-    let wb = b.mul(w1);
-    let wc = c.mul(w2);
+    const wa = a.mul(w0);
+    const wb = b.mul(w1);
+    const wc = c.mul(w2);
 
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
 function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
 {
-    let wa = a.mul(w0 / z0 * z);
-    let wb = b.mul(w1 / z1 * z);
+    const wa = a.mul(w0 / z0 * z);
+    const wb = b.mul(w1 / z1 * z);
 
-    let res = new Vector3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
-
-    return res;
+    return new Vector3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
 }
 
 function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
 {
-    let wa = a.mul(w0 / z0 * z);
-    let wb = b.mul(w1 / z1 * z);
-    let wc = c.mul(w2 / z2 * z);
+    const wa = a.mul(w0 / z0 * z);
+    const wb = b.mul(w1 / z1 * z);
+    const wc = c.mul(w2 / z2 * z);
 
-    let res = new Vector2(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y);
-
-    return res;
+    return new Vector2(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y);
 }
 
 function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
 {
-    let wa = a.mul(w0 / z0 * z);
-    let wb = b.mul(w1 / z1 * z);
-    let wc = c.mul(w2 / z2 * z);
+    const wa = a.mul(w0 / z0 * z);
+    const wb = b.mul(w1 / z1 * z);
+    const wc = c.mul(w2 / z2 * z);
 
-    let res = new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
-
-    return res;
+    return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
 function convertColor(v)

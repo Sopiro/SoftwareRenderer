@@ -7,13 +7,17 @@ canvas {
     display: inline;
 }
 
-#frame_counter{
+#frame_counter {
     font-size: 20px;
     display: inline;
     float: right;
 }
 
-.head{
+.head {
     width: 800px;
     margin-bottom: -30px;
+}
+
+h3 {
+    margin-bottom: -20px;
 }

@@ -929,46 +929,58 @@ function init()
     player = new Player();
 }
 
+const times = [];
+let fps;
+
+let started = false;
+
 function run()
 {
-    const currentTime = new Date().getTime();
-    passedTime += currentTime - previousTime;
-    previousTime = currentTime;
+    const now = performance.now();
+    while (times.length > 0 && times[0] <= now - 1000) times.shift();
 
-    if (loadedResources == resourceReady && time == 0)
+    const delta = (now - times[times.length - 1]) / 1000.0;
+    // console.log(delta / 1000.0);
+
+    times.push(now);
+    fps = times.length;
+    frameCounterElement.innerHTML = fps + "fps";
+
+    if (!started && loadedResources == resourceReady)
     {
+        started = true;
         cvs.setAttribute("width", WIDTH * SCALE + "px");
         cvs.setAttribute("height", HEIGHT * SCALE + "px");
         gfx.font = "48px verdana";
     }
 
-    while (passedTime >= msPerFrame)
+    if (started && !pause)
     {
-        if (loadedResources == resourceReady && !pause)
-        {
-            update(passedTime / 1000.0);
-            render();
-            time += passedTime / 1000.0;
-
-            timer += passedTime;
-            frameCounter++;
-
-            if (timer >= 1000)
-            {
-                frameCounterElement.innerHTML = frameCounter + "fps";
-                timer = 0;
-                frameCounter = 0;
-            }
-        }
-        else if (pause)
-        {
-            gfx.fillText("PAUSE", 4, 40);
-        }
-
-        passedTime -= msPerFrame;
+        update(delta);
+        render();
+        time += delta;
+    }
+    else if (pause)
+    {
+        gfx.fillText("PAUSE", 4, 40);
     }
 
     requestAnimationFrame(run);
+}
+
+function refreshLoop()
+{
+    window.requestAnimationFrame(() =>
+    {
+        const now = performance.now();
+        while (times.length > 0 && times[0] <= now - 1000)
+        {
+            times.shift();
+        }
+        times.push(now);
+        fps = times.length;
+        refreshLoop();
+    });
 }
 
 function update(delta)

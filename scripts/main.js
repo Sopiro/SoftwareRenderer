@@ -10,7 +10,7 @@ let textures =
 {
     pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
     dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
-    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]]
+    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]]
 };
 
 const resourceReady = Object.keys(textures).length;;

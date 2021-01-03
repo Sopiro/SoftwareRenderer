@@ -10,6 +10,7 @@ let textures =
 {
     pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
     dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
+    container: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
     skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]]
 };
 
@@ -407,7 +408,7 @@ class View extends Bitmap
         for (let i = 0; i < 100; i++)
         {
             if (i % 2 == 0) tex = textures.pepe;
-            else tex = textures.dulri;
+            else tex = textures.container;
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
 

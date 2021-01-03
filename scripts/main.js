@@ -8,8 +8,9 @@ let zClipNear = 0.2;
 const spriteSheetSize = 512;
 let textures =
 {
-    pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", 512, 512],
-    dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", 256, 256]
+    pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
+    dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
+    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [256, 256]]
 };
 
 const resourceReady = Object.keys(textures).length;;
@@ -39,6 +40,11 @@ let mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0
 let player;
 
 let backFaceCulling = false;
+
+const RENDER_CW = 0;
+const RENDER_CCW = 1;
+const SET_Z_9999 = 0x10
+let renderFlag = 0;
 
 /**
  * Creates a pseudo-random value generator. The seed must be an integer.
@@ -392,23 +398,6 @@ class View extends Bitmap
 
         const r = new Random(123);
 
-        // for (let i = 0; i < 1000; i++)
-        //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -1), 0xff00ff));
-
-        // for (let i = 0; i < 1000; i++)
-        //     this.drawPoint(new Vertex(new Vector3(r.nextFloat() * 1 - 0.5, r.nextFloat() * 1 - 0.5, -4), 0xffffff));
-
-
-        // this.drawTriangle(
-        //     new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
-        //     new Vertex(new Vector3(-1, 1, -3), 0x000000, new Vector2(0, 0)),
-        //     new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)), spritesheet);
-
-        // this.drawTriangle(
-        //     new Vertex(new Vector3(-1, -1, -3), 0x808080, new Vector2(0, 1)),
-        //     new Vertex(new Vector3(1, 1, -3), 0x808080, new Vector2(1, 0)),
-        //     new Vertex(new Vector3(1, -1, -3), 0xffffff, new Vector2(1, 1)), spritesheet);
-
         const s = 30.0;
         let tex;
 
@@ -422,12 +411,14 @@ class View extends Bitmap
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
 
             // this.drawCube(pos, new Vector3(1, 1, 1), tex, true);
-            this.drawCube(matrix.mulVector(pos), new Vector3(1, 1, 1), tex, true);
+            this.drawCube(matrix.mulVector(pos), new Vector3(1, 1, 1), tex, false, true);
         }
 
-        this.drawPoint(new Vertex(new Vector3(0, 0, -1), 0xff00ff));
+        // this.drawPoint(new Vertex(new Vector3(0, 0, -1), 0xff00ff));
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
         // this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), textures.pepe, true);
+
+        this.drawSkyBox(textures.dulri);
     }
 
     drawPoint(v)
@@ -553,6 +544,13 @@ class View extends Bitmap
     {
         if (tex == undefined) tex = textures.sample0;
 
+        if ((renderFlag & 0xf) == 1)
+        {
+            const tmp = v0;
+            v0 = v1;
+            v1 = tmp;
+        }
+
         v0.pos = this.playerTransform(v0.pos);
         v1.pos = this.playerTransform(v1.pos);
         v2.pos = this.playerTransform(v2.pos);
@@ -637,6 +635,13 @@ class View extends Bitmap
         // Culling back faces
         if (area < 0) return;
 
+        let depthMin = 0;
+        
+        if (((renderFlag >> 4) & 0xf) == 1)
+        {
+            depthMin = 9999;
+        }
+
         for (let y = minY; y < maxY; y++)
         {
             for (let x = minX; x < maxX; x++)
@@ -669,7 +674,7 @@ class View extends Bitmap
 
                     const c = tex.pixels[tx + ty * tex.width];
 
-                    this.renderPixel(new Vector3(x, y, z), c);
+                    this.renderPixel(new Vector3(x, y, z + depthMin), c);
                 }
             }
         }
@@ -681,8 +686,7 @@ class View extends Bitmap
 
     drawCube(pos, size, tex, centered)
     {
-        if (centered == true)
-            pos = pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
+        if (centered == true) pos = pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
 
         const p000 = new Vector3(pos.x, pos.y, pos.z);
         const p100 = new Vector3(pos.x + size.x, pos.y, pos.z);
@@ -716,6 +720,13 @@ class View extends Bitmap
 
         this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p101, 0xffffff, t00), new Vertex(p001, 0xffffff, t10), tex);
         this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p001, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), tex);
+    }
+
+    drawSkyBox(tex)
+    {
+        renderFlag = SET_Z_9999 | RENDER_CCW;
+        this.drawCube(player.pos, new Vector3(1, 1, 1), tex, true);
+        renderFlag = 0;
     }
 
     playerTransform(pos)
@@ -756,8 +767,8 @@ function init()
         if (Object.hasOwnProperty.call(textures, key))
         {
             const imageURL = textures[key][0];
-            const imageWidth = textures[key][1];
-            const imageHeight = textures[key][2];
+            const imageWidth = textures[key][1][0];
+            const imageHeight = textures[key][1][1];
 
             let image = new Image();
             image.src = imageURL;

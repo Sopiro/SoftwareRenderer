@@ -633,10 +633,11 @@ class View extends Bitmap
         v1 = this.modelTransform(v1);
         v2 = this.modelTransform(v2);
 
+        // Render Face Normal
         if (((renderFlag >> 2) & 0xf) == 1)
         {
             const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
-            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.mul(0.3)), 0xff00ff));
+            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.mul(0.2)), 0xff00ff));
         }
 
         v0 = this.playerTransform(v0);

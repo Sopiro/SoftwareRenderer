@@ -3,4 +3,4 @@
 Playable at: https://sopiro.github.io/js_bitmap_renderer/
 
 ## Preview 
-![image](.github/4bf380d.gif)
+![image](.github/9c1829b.gif)

@@ -5,23 +5,22 @@ let SCALE = 4;
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
 
-const spriteSheetSize = 512;
 let textures =
 {
-    pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
-    dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
-    container: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
-    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
+    "pepe": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
+    "dulri": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
+    "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
 };
 
 let models =
 {
-    cube: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj", "pepe"],
-    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj", "container"],
-    monkey: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj", "container"],
+    "cube": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj",
+    "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
+    "monkey": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj",
 };
 
-const resourceReady = Object.keys(textures).length;;
+const resourceReady = Object.keys(textures).length + Object.keys(models).length;
 let loadedResources = 0;
 
 const times = [];
@@ -194,9 +193,19 @@ class Vector3
         return new Vector3(this.x / v, this.y / v, this.z / v);
     }
 
+    divElement(v)
+    {
+        return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
+    }
+
     mul(v)
     {
         return new Vector3(this.x * v, this.y * v, this.z * v);
+    }
+
+    mulElement(v)
+    {
+        return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
     }
 
     equals(v)
@@ -255,13 +264,12 @@ class Matrix4
         return res;
     }
 
-    scale(s)
+    scale(x, y, z)
     {
         let scale = new Matrix4();
-        scale.m00 = s;
-        scale.m11 = s;
-        scale.m22 = s;
-        scale.m33 = s;
+        scale.m00 = x;
+        scale.m11 = y;
+        scale.m22 = z;
 
         return this.mulMatrix(scale);
     }
@@ -316,21 +324,21 @@ class Vertex
 
 class Model
 {
-    constructor(path, texture)
+    constructor(vPositions, vTexCoords, vNormals, indices)
     {
-        let xhr = new XMLHttpRequest();
-        xhr.open("get", path, true);
-        xhr.send(null);
+        this.vPositions = vPositions;
+        this.vTexCoords = vTexCoords;
+        this.vNormals = vNormals;
+        this.indices = indices;
+    }
 
-        xhr.onreadystatechange = function ()
-        {
-            if (xhr.readyState == 4 && xhr.status == 200)
-            {
-                const lines = xhr.response.split('\n');
+    getVertex(pos, tex, nor)
+    {
+        const vPos = new Vector3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
+        const vTex = new Vector2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
+        const vNor = new Vector3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
 
-                console.log(lines.length);
-            }
-        }
+        return new Vertex(vPos, 0xffffff, vTex, vNor);
     }
 }
 
@@ -423,9 +431,12 @@ class View extends Bitmap
         super(width, height);
 
         this.zBuffer = new Float32Array(width * height);
-        this.sunIntensity = 3.0;
+        this.sunIntensity = 1.1;
         this.sunPosRelativeToZero = new Vector3(1, 1, 1).normalized();
         this.ambient = 0.2;
+
+        this.transform = new Matrix4();
+        this.texture = textures.sample0;
     }
 
     update(delta)
@@ -433,7 +444,6 @@ class View extends Bitmap
         let matrix = new Matrix4().rotate(0, delta, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
-
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
     }
 
@@ -445,18 +455,19 @@ class View extends Bitmap
         const r = new Random(123);
 
         const s = 30.0;
-        let tex;
 
         renderFlag = 0;
         for (let i = 0; i < 100; i++)
         {
-            if (i % 2 == 0) tex = textures.pepe;
-            else tex = textures.container;
+            if (i % 2 == 0) this.setTexture(textures.pepe);
+            else this.setTexture(textures.container);
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
+            const rot = new Vector3(time / 5 * (i % 3), time / 10.0 * (i % 5), time / 5 * (i % 7));
+            const scale = new Vector3(1, 1, 1);
+            this.transform = createTransformMatrix(pos, rot, scale);
 
-            // this.drawCube(pos, new Vector3(1, 1, 1), tex, true);
-            this.drawCube(pos, new Vector3(1, 1, 1), tex, false, true);
+            this.drawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), true);
         }
 
         // this.drawTriangle(new Vertex(new Vector3(0, 0, -1), 0xfffffff, new Vector2(0, 1)),
@@ -467,10 +478,19 @@ class View extends Bitmap
 
         renderFlag = RENDER_FACE_NORMAL;
         this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
-        this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), textures.pepe, true);
+
+        this.transform = new Matrix4();
+        this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), true);
 
         // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
+
+
+        this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
+        this.drawModel(models.sphere, textures.sample0);
+
+        this.transform = new Matrix4().translate(-2, 1, -5).rotate(-time, 0, -time);
+        this.drawModel(models.monkey, textures.white);
 
         this.drawSkyBox(time / 100.0);
     }
@@ -591,10 +611,8 @@ class View extends Bitmap
         return { x0: x0, y0: y0, x1: x1, y1: y1 };
     }
 
-    drawTriangle(v0, v1, v2, tex)
+    drawTriangle(v0, v1, v2)
     {
-        if (tex == undefined) tex = textures.sample0;
-
         // Render CCW
         if ((renderFlag & 1) == 1)
         {
@@ -611,6 +629,10 @@ class View extends Bitmap
             v2.normal = normal;
         }
 
+        v0 = this.modelTransform(v0);
+        v1 = this.modelTransform(v1);
+        v2 = this.modelTransform(v2);
+
         if (((renderFlag >> 2) & 0xf) == 1)
         {
             const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
@@ -624,7 +646,7 @@ class View extends Bitmap
         if (v0.pos.z < zClipNear && v1.pos.z < zClipNear && v2.pos.z < zClipNear) return;
         else if (v0.pos.z > zClipNear && v1.pos.z > zClipNear && v2.pos.z > zClipNear)
         {
-            this.drawTriangleVS(v0, v1, v2, tex);
+            this.drawTriangleVS(v0, v1, v2);
             return;
         }
 
@@ -662,16 +684,16 @@ class View extends Bitmap
         switch (drawVertices.length)
         {
             case 3:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], tex)
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2])
                 break;
             case 4:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2], tex)
-                this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3], tex)
+                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2])
+                this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3])
                 break;
         }
     }
 
-    drawTriangleVS(vp0, vp1, vp2, tex)
+    drawTriangleVS(vp0, vp1, vp2)
     {
         const z0 = vp0.pos.z;
         const z1 = vp1.pos.z;
@@ -730,15 +752,16 @@ class View extends Bitmap
                     // let c = lerp3AttributeVec3(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
                     const n = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
 
-                    let tx = Math.floor(tex.width * t.x);
-                    let ty = Math.floor(tex.height * t.y);
+                    let tx = Math.floor(this.texture.width * t.x);
+                    let ty = Math.floor(this.texture.height * t.y);
+
 
                     if (tx < 0) tx = 0;
-                    if (tx >= tex.width) tx = tex.width - 1;
+                    if (tx >= this.texture.width) tx = this.texture.width - 1;
                     if (ty < 0) ty = 0;
-                    if (ty >= tex.height) ty = tex.height - 1;
+                    if (ty >= this.texture.height) ty = this.texture.height - 1;
 
-                    let c = tex.pixels[tx + ty * tex.width];
+                    let c = this.texture.pixels[tx + ty * this.texture.width];
 
                     if (lightCalc)
                     {
@@ -754,12 +777,31 @@ class View extends Bitmap
         }
     }
 
-    drawIndex(positions, normals, texCoords, indices)
+    drawModel(model, tex)
     {
+        this.setTexture(tex);
+        renderFlag |= RENDER_CCW;
 
+        for (let i = 0; i < model.indices.length; i++)
+        {
+            let face = model.indices[i];
+
+            let vertices = [];
+            for (let v = 0; v < 3; v++)
+            {
+                const pos = face[v][0] - 1;
+                const tex = face[v][1] - 1;
+                const nor = face[v][2] - 1;
+
+                vertices.push(model.getVertex(pos, tex, nor));
+            }
+
+            this.drawTriangle(vertices[0], vertices[1], vertices[2]);
+        }
+        renderFlag = 0;
     }
 
-    drawCube(pos, size, tex, centered)
+    drawCube(pos, size, centered)
     {
         if (centered == true) pos = pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
 
@@ -778,23 +820,23 @@ class View extends Bitmap
         const t11 = new Vector2(1, 1);
         const t01 = new Vector2(0, 1);
 
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p111, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p011, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p011, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p010, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p010, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p110, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p010, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p110, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p101, 0xffffff, t00), new Vertex(p001, 0xffffff, t10), tex);
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p001, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), tex);
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p101, 0xffffff, t00), new Vertex(p001, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p001, 0xffffff, t10), new Vertex(p000, 0xffffff, t11));
     }
 
     drawSkyBox(rotation)
@@ -803,40 +845,46 @@ class View extends Bitmap
 
         let size = new Vector3(1000, 1000, 1000);
         let pos = player.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
-        rotation = new Matrix4().rotate(0, rotation, 0);
+        this.transform = new Matrix4().rotate(0, rotation, 0);
 
-        const p000 = rotation.mulVector(new Vector3(pos.x, pos.y, pos.z));
-        const p100 = rotation.mulVector(new Vector3(pos.x + size.x, pos.y, pos.z));
-        const p110 = rotation.mulVector(new Vector3(pos.x + size.x, pos.y + size.y, pos.z));
-        const p010 = rotation.mulVector(new Vector3(pos.x, pos.y + size.y, pos.z));
+        const p000 = new Vector3(pos.x, pos.y, pos.z);
+        const p100 = new Vector3(pos.x + size.x, pos.y, pos.z);
+        const p110 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z);
+        const p010 = new Vector3(pos.x, pos.y + size.y, pos.z);
 
-        const p001 = rotation.mulVector(new Vector3(pos.x, pos.y, pos.z - size.z));
-        const p101 = rotation.mulVector(new Vector3(pos.x + size.x, pos.y, pos.z - size.z));
-        const p111 = rotation.mulVector(new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z));
-        const p011 = rotation.mulVector(new Vector3(pos.x, pos.y + size.y, pos.z - size.z));
+        const p001 = new Vector3(pos.x, pos.y, pos.z - size.z);
+        const p101 = new Vector3(pos.x + size.x, pos.y, pos.z - size.z);
+        const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
+        const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
 
         const t00 = new Vector2(0, 0);
         const t10 = new Vector2(1, 0);
         const t11 = new Vector2(1, 1);
         const t01 = new Vector2(0, 1);
 
-        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10), textures.skybox_front);
-        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11), textures.skybox_front);
+        this.setTexture(textures.skybox_front);
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p110, 0xffffff, t10), textures.skybox_right);
-        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11), textures.skybox_right);
+        this.setTexture(textures.skybox_right);
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p011, 0xffffff, t10), textures.skybox_left);
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11), textures.skybox_left);
+        this.setTexture(textures.skybox_left);
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p011, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p010, 0xffffff, t10), textures.skybox_back);
-        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11), textures.skybox_back);
+        this.setTexture(textures.skybox_back);
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p010, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10), textures.skybox_top);
-        this.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p111, 0xffffff, t11), textures.skybox_top);
+        this.setTexture(textures.skybox_top);
+        this.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p111, 0xffffff, t11));
 
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p001, 0xffffff, t00), new Vertex(p101, 0xffffff, t10), textures.skybox_bottom);
-        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p101, 0xffffff, t10), new Vertex(p100, 0xffffff, t11), textures.skybox_bottom);
+        this.setTexture(textures.skybox_bottom);
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p001, 0xffffff, t00), new Vertex(p101, 0xffffff, t10));
+        this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p101, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
 
         renderFlag = 0;
     }
@@ -848,6 +896,14 @@ class View extends Bitmap
         if (v.normal != undefined) normal = player.cameraTransform.mulVector(new Vector3(v.normal.x, v.normal.y, v.normal.z), 0)
 
         return new Vertex(pos, v.color, v.texCoord, normal);
+    }
+
+    modelTransform(v)
+    {
+        const newPos = this.transform.mulVector(v.pos, 1);
+        const newNor = this.transform.mulVector(v.normal, 0);
+
+        return new Vertex(newPos, v.color, v.texCoord, newNor);
     }
 
     renderPixel(p, c)
@@ -864,6 +920,11 @@ class View extends Bitmap
     checkOutOfScreen(p)
     {
         return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
+    }
+
+    setTexture(tex)
+    {
+        this.texture = tex;
     }
 }
 
@@ -993,13 +1054,15 @@ function init()
         const y = int(i / 64);
         sample.pixels[i] = (((x << 6) % 0xff) << 8) | (y << 6) % 0xff;
     }
-
     textures["sample0"] = sample;
 
     sample = new Bitmap(64, 64);
     sample.clear(0xff00ff);
-
     textures["sample1"] = sample;
+
+    sample = new Bitmap(64, 64);
+    sample.clear(0xffffff);
+    textures["white"] = sample;
 
     player = new Player();
 }
@@ -1052,7 +1115,6 @@ function update(delta)
 function render()
 {
     view.clear(0x808080);
-
     view.renderView();
 
     gfx.putImageData(convertBitmapToImageData(view, SCALE), 0, 0);
@@ -1178,16 +1240,80 @@ function mulColor(c, v)
     return int((r << 16)) | int(g << 8) | int(b);
 }
 
+function createTransformMatrix(pos, rot, scale)
+{
+    return new Matrix4().translate(pos.x, pos.y, pos.z).rotate(rot.x, rot.y, rot.z).scale(scale.x, scale.y, scale.z);
+}
+
 window.onload = start;
 
-// Load model
+// Load models
 for (const key in models)
 {
     if (Object.hasOwnProperty.call(models, key))
     {
-        const modelURL = models[key][0];
-        const textureName = models[key][1];
+        const modelURL = models[key];
 
-        models[key] = new Model(modelURL, textureName);
+        let xhr = new XMLHttpRequest();
+        xhr.open("get", modelURL, true);
+        xhr.send(null);
+
+        xhr.onreadystatechange = function ()
+        {
+            if (xhr.readyState == 4 && xhr.status == 200)
+            {
+                // Load OBJ file line by line
+                const lines = xhr.response.split('\n');
+
+                let positions = [];
+                let texCoords = [];
+                let normals = [];
+                let indices = [];
+
+                for (const line of lines)
+                {
+                    const tokens = line.split(" ");
+                    switch (tokens[0])
+                    {
+                        case "v":
+                            let v = [];
+                            for (let i = 0; i < 3; i++)
+                                v.push(parseFloat(tokens[i + 1]))
+                            positions.push(v);
+                            break;
+
+                        case "vt":
+                            let tc = [];
+                            for (let i = 0; i < 2; i++)
+                                tc.push(parseFloat(tokens[i + 1]))
+                            texCoords.push(tc);
+                            break;
+
+                        case "vn":
+                            let vn = [];
+                            for (let i = 0; i < 3; i++)
+                                vn.push(parseFloat(tokens[i + 1]))
+                            normals.push(vn);
+                            break;
+
+                        case "f":
+                            let f = [];
+                            for (let i = 0; i < 3; i++)
+                            {
+                                let v = [];
+                                for (let j = 0; j < 3; j++)
+                                    v.push(parseInt(tokens[i + 1].split("/")[j]))
+                                f.push(v);
+                            }
+                            indices.push(f);
+                            break;
+                    }
+                }
+
+                loadedResources++;
+
+                models[key] = new Model(positions, texCoords, normals, indices);
+            }
+        }
     }
 }

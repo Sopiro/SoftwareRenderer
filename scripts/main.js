@@ -11,13 +11,14 @@ let textures =
     pepe: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
     dulri: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
     container: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
-    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]]
+    skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
 };
 
 let models =
 {
-    cube: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/", "pepe"],
-    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/", "container"]
+    cube: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj", "pepe"],
+    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere.obj", "container"],
+    monkey: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey.obj", "container"],
 };
 
 const resourceReady = Object.keys(textures).length;;
@@ -310,6 +311,26 @@ class Vertex
         else this.texCoord = texCoord;
 
         this.normal = normal;
+    }
+}
+
+class Model
+{
+    constructor(path, texture)
+    {
+        let xhr = new XMLHttpRequest();
+        xhr.open("get", path, true);
+        xhr.send(null);
+
+        xhr.onreadystatechange = function ()
+        {
+            if (xhr.readyState == 4 && xhr.status == 200)
+            {
+                const lines = xhr.response.split('\n');
+
+                console.log(lines.length);
+            }
+        }
     }
 }
 
@@ -733,8 +754,9 @@ class View extends Bitmap
         }
     }
 
-    drawIndex(vertices, indices)
+    drawIndex(positions, normals, texCoords, indices)
     {
+
     }
 
     drawCube(pos, size, tex, centered)
@@ -1157,14 +1179,15 @@ function mulColor(c, v)
 }
 
 window.onload = start;
-// let xhr = new XMLHttpRequest();
-// xhr.open("get", "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/scripts/main.js", true);
-// xhr.send(null);
 
-// xhr.onreadystatechange = function ()
-// {
-//     if (xhr.readyState == 4 && xhr.status == 200)
-//     {
-//         console.log(xhr.response.split('\n'));
-//     }
-// }
+// Load model
+for (const key in models)
+{
+    if (Object.hasOwnProperty.call(models, key))
+    {
+        const modelURL = models[key][0];
+        const textureName = models[key][1];
+
+        models[key] = new Model(modelURL, textureName);
+    }
+}

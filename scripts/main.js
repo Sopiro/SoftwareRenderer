@@ -17,8 +17,8 @@ let textures =
 let models =
 {
     cube: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj", "pepe"],
-    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere.obj", "container"],
-    monkey: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey.obj", "container"],
+    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj", "container"],
+    monkey: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj", "container"],
 };
 
 const resourceReady = Object.keys(textures).length;;

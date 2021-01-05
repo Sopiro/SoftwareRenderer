@@ -14,10 +14,11 @@ let textures =
     skybox: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]]
 };
 
-// let models =
-// {
-
-// };
+let models =
+{
+    cube: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/", "pepe"],
+    sphere: ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/", "container"]
+};
 
 const resourceReady = Object.keys(textures).length;;
 let loadedResources = 0;
@@ -1068,11 +1069,11 @@ function convertBitmapToImageData(bitmap, scale)
             const g = (bitmapPixel >> 8) & 0xff;
             const b = bitmapPixel & 0xff;
 
-            for (let ys = 0; ys < SCALE; ys++)
+            for (let ys = 0; ys < scale; ys++)
             {
-                for (let xs = 0; xs < SCALE; xs++)
+                for (let xs = 0; xs < scale; xs++)
                 {
-                    const ptr = ((x * SCALE) + xs + ((y * SCALE) + ys) * res.width) * 4;
+                    const ptr = ((x * scale) + xs + ((y * scale) + ys) * res.width) * 4;
 
                     res.data[ptr] = r;
                     res.data[ptr + 1] = g;
@@ -1156,3 +1157,14 @@ function mulColor(c, v)
 }
 
 window.onload = start;
+// let xhr = new XMLHttpRequest();
+// xhr.open("get", "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/scripts/main.js", true);
+// xhr.send(null);
+
+// xhr.onreadystatechange = function ()
+// {
+//     if (xhr.readyState == 4 && xhr.status == 200)
+//     {
+//         console.log(xhr.response.split('\n'));
+//     }
+// }

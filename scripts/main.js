@@ -487,10 +487,12 @@ class View extends Bitmap
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
 
 
+        renderFlag = 0;
         this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
-        this.drawModel(models.sphere, textures.sample0);
+        this.drawModel(models.sphere, textures.white);
 
-        this.transform = new Matrix4().translate(-2, 1, -5).rotate(-time, 0, -time);
+        renderFlag = 0;
+        this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
         this.drawModel(models.man, textures.white);
 
         this.drawSkyBox(time / 100.0);

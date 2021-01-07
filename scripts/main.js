@@ -18,6 +18,7 @@ let models =
     "cube": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj",
     "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
     "monkey": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj",
+    "man": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/man.obj",
 };
 
 const resourceReady = Object.keys(textures).length + Object.keys(models).length;
@@ -490,7 +491,7 @@ class View extends Bitmap
         this.drawModel(models.sphere, textures.sample0);
 
         this.transform = new Matrix4().translate(-2, 1, -5).rotate(-time, 0, -time);
-        this.drawModel(models.monkey, textures.white);
+        this.drawModel(models.man, textures.white);
 
         this.drawSkyBox(time / 100.0);
     }

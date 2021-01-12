@@ -12,7 +12,9 @@ let textures =
     "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
     "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
     "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
-    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2047, 1536]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2048, 1536]],
+    "brick": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3.png", [512, 512]],
+    "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [512, 512]],
 };
 
 let models =
@@ -576,7 +578,7 @@ class View extends Bitmap
         // this.transform = new Matrix4().translate(-2, 1, -5);
         this.transform = new Matrix4().translate(-2, 1, -5);
         // this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
-        this.drawModel(models.sphere, textures.white);
+        this.drawModel(models.sphere, textures.brick);
 
         this.drawSkyBox(time / 100.0);
 

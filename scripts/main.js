@@ -11,6 +11,8 @@ let textures =
     "dulri": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
     "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
     "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2047, 1536]],
 };
 
 let models =
@@ -180,7 +182,7 @@ class Vector3
 
     cross(v)
     {
-        return new Vector3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.z * v.x);
+        return new Vector3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
     }
 
     add(v)
@@ -338,6 +340,18 @@ class Face
         this.v2 = v2;
     }
 
+    calcNormal()
+    {
+        const edge1 = this.v1.pos.sub(this.v0.pos);
+        const edge2 = this.v2.pos.sub(this.v0.pos);
+
+        const normal = edge2.cross(edge1).normalized();
+
+        this.v0.normal = normal;
+        this.v1.normal = normal;
+        this.v2.normal = normal;
+    }
+
     calcTangentAndBiTangent()
     {
         const edge1 = this.v1.pos.sub(this.v0.pos);
@@ -359,9 +373,9 @@ class Face
         this.v1.tangent = tangent;
         this.v2.tangent = tangent;
 
-        this.v0.biTangent = this.v0.normal.cross(v0.tangent);
-        this.v1.biTangent = this.v1.normal.cross(v1.tangent);
-        this.v2.biTangent = this.v2.normal.cross(v2.tangent);
+        this.v0.biTangent = this.v0.normal.normalized().cross(this.v0.tangent).normalized();
+        this.v1.biTangent = this.v1.normal.normalized().cross(this.v1.tangent).normalized();
+        this.v2.biTangent = this.v2.normal.normalized().cross(this.v2.tangent).normalized();
     }
 }
 
@@ -548,9 +562,6 @@ class View extends Bitmap
         renderFlag = RENDER_FACE_NORMAL;
         this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
 
-        this.transform = new Matrix4();
-        this.drawCube(new Vector3(0, 0, -3), new Vector3(1, 1, 1), true);
-
         // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
 
@@ -558,14 +569,27 @@ class View extends Bitmap
         renderFlag = 0;
         this.transform = new Matrix4().translate(2, 1, -5);
         // this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
+        this.drawModel(models.sphere, textures.pepe);
+
+        renderFlag = RENDER_VERTEX_NORMAL;
+
+        // this.transform = new Matrix4().translate(-2, 1, -5);
+        this.transform = new Matrix4().translate(-2, 1, -5);
+        // this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
         this.drawModel(models.sphere, textures.white);
 
-        renderFlag = RENDER_TANGENT;
-        // this.transform = new Matrix4().translate(-2, 1, -5);
-        this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
-        this.drawModel(models.cube, textures.pepe);
-
         this.drawSkyBox(time / 100.0);
+
+        renderFlag = RENDER_VERTEX_NORMAL | RENDER_TANGENT | RENDER_BITANGENT;
+        this.transform = new Matrix4().translate(0, 0, -2).rotate(0, time, 0);
+        this.setTexture(textures.pepe);
+        let f = new Face(new Vertex(new Vector3(-1, 0, 0), 0xffffff, new Vector2(0, 0)),
+            new Vertex(new Vector3(0, 1, 0), 0xffffff, new Vector2(0.5, 1)),
+            new Vertex(new Vector3(1, 0, 0), 0xffffff, new Vector2(1, 0)));
+        f.calcNormal();
+        f.calcTangentAndBiTangent();
+
+        this.drawFace(f);
     }
 
     drawPoint(v)
@@ -707,31 +731,31 @@ class View extends Bitmap
         v2 = this.modelTransform(v2);
 
         // Render Face normal
-        if (((renderFlag >> 2) & 0xf) == 1)
+        if (((renderFlag >> 2) & 1) == 1)
         {
             const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
             this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.mul(0.2)), 0xff00ff));
         }
 
         // Render Tangent
-        if (((renderFlag >> 4) & 0xf) == 1)
+        if (((renderFlag >> 4) & 1) == 1 && v0.tangent != undefined)
         {
             const pos = v0.pos;
             this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0xff0000));
         }
 
         // Render BiTangent
-        if (((renderFlag >> 5) & 0xf) == 1)
+        if (((renderFlag >> 5) & 1) == 1 && v0.biTangent != undefined)
         {
             const pos = v0.pos;
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0x00ff00));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(0.2)), 0x00ff00));
         }
 
         // Render Vertex normal
-        if (((renderFlag >> 6) & 0xf) == 1)
+        if (((renderFlag >> 6) & 1) == 1)
         {
             const pos = v0.pos;
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(0.2)), 0x0000ff));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(0.2)), 0x0000ff));
         }
 
         v0 = this.playerTransform(v0);
@@ -786,6 +810,11 @@ class View extends Bitmap
                 this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3])
                 break;
         }
+    }
+
+    drawFace(f)
+    {
+        this.drawTriangle(f.v0, f.v1, f.v2);
     }
 
     drawTriangleVS(vp0, vp1, vp2)
@@ -848,8 +877,7 @@ class View extends Bitmap
                     const n = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
 
                     let tx = Math.floor(this.texture.width * t.x);
-                    let ty = Math.floor(this.texture.height * t.y);
-
+                    let ty = Math.floor(this.texture.height * (1 - t.y));
 
                     if (tx < 0) tx = 0;
                     if (tx >= this.texture.width) tx = this.texture.width - 1;
@@ -881,7 +909,7 @@ class View extends Bitmap
         {
             const face = model.faces[i];
 
-            this.drawTriangle(face.v0, face.v1, face.v2);
+            this.drawFace(face);
         }
         renderFlag = 0;
     }
@@ -900,10 +928,10 @@ class View extends Bitmap
         const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
         const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
 
-        const t00 = new Vector2(0, 0);
-        const t10 = new Vector2(1, 0);
-        const t11 = new Vector2(1, 1);
-        const t01 = new Vector2(0, 1);
+        const t00 = new Vector2(0, 1);
+        const t10 = new Vector2(1, 1);
+        const t11 = new Vector2(1, 0);
+        const t01 = new Vector2(0, 0);
 
         this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
         this.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
@@ -942,10 +970,10 @@ class View extends Bitmap
         const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
         const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
 
-        const t00 = new Vector2(0, 0);
-        const t10 = new Vector2(1, 0);
-        const t11 = new Vector2(1, 1);
-        const t01 = new Vector2(0, 1);
+        const t00 = new Vector2(0, 1);
+        const t10 = new Vector2(1, 1);
+        const t11 = new Vector2(1, 0);
+        const t01 = new Vector2(0, 0);
 
         this.setTexture(textures.skybox_front);
         this.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));
@@ -981,8 +1009,10 @@ class View extends Bitmap
         if (v.normal != undefined) newNor = player.cameraTransform.mulVector(v.normal, 0).normalized();
         let newTan = undefined;
         if (v.tangent != undefined) newTan = player.cameraTransform.mulVector(v.tangent, 0).normalized();
+        let newBiTan = undefined;
+        if (v.biTangent != undefined) newBiTan = player.cameraTransform.mulVector(v.biTangent, 0).normalized();
 
-        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan);
+        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan, newBiTan);
     }
 
     modelTransform(v)
@@ -992,8 +1022,10 @@ class View extends Bitmap
         if (v.normal != undefined) newNor = this.transform.mulVector(v.normal, 0).normalized();
         let newTan = undefined;
         if (v.tangent != undefined) newTan = this.transform.mulVector(v.tangent, 0).normalized();
+        let newBiTan = undefined;
+        if (v.biTangent != undefined) newBiTan = this.transform.mulVector(v.biTangent, 0).normalized();
 
-        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan);
+        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan, newBiTan);
     }
 
     renderPixel(p, c)

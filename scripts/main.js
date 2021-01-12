@@ -10,7 +10,7 @@ let textures =
     "pepe": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
     "dulri": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
     "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
-    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
 };
 
 let models =
@@ -53,6 +53,10 @@ const RENDER_CCW = 1;
 const SET_Z_9999 = 2;
 const RENDER_FACE_NORMAL = 4;
 const EFFECT_NO_LIGHT = 8;
+const RENDER_TANGENT = 16;
+const RENDER_BITANGENT = 32;
+const RENDER_VERTEX_NORMAL = 64;
+
 let renderFlag = 0;
 
 /**
@@ -308,7 +312,7 @@ class Matrix4
 
 class Vertex
 {
-    constructor(pos, color, texCoord, normal)
+    constructor(pos, color, texCoord, normal, tangent, biTangent)
     {
         this.pos = pos;
 
@@ -320,6 +324,44 @@ class Vertex
         else this.texCoord = texCoord;
 
         this.normal = normal;
+        this.tangent = tangent;
+        this.biTangent = biTangent;
+    }
+}
+
+class Face
+{
+    constructor(v0, v1, v2)
+    {
+        this.v0 = v0;
+        this.v1 = v1;
+        this.v2 = v2;
+    }
+
+    calcTangentAndBiTangent()
+    {
+        const edge1 = this.v1.pos.sub(this.v0.pos);
+        const edge2 = this.v2.pos.sub(this.v0.pos);
+        const deltaUV1 = this.v1.texCoord.sub(this.v0.texCoord);
+        const deltaUV2 = this.v2.texCoord.sub(this.v0.texCoord);
+
+        const f = 1.0 / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        let tangent = new Vector3(
+            f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x),
+            f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
+            f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)
+        );
+
+        tangent.normalize();
+
+        this.v0.tangent = tangent;
+        this.v1.tangent = tangent;
+        this.v2.tangent = tangent;
+
+        this.v0.biTangent = this.v0.normal.cross(v0.tangent);
+        this.v1.biTangent = this.v1.normal.cross(v1.tangent);
+        this.v2.biTangent = this.v2.normal.cross(v2.tangent);
     }
 }
 
@@ -331,15 +373,41 @@ class Model
         this.vTexCoords = vTexCoords;
         this.vNormals = vNormals;
         this.indices = indices;
+        this.faces = [];
+
+        for (let i = 0; i < this.indices.length; i++)
+        {
+            let vFace = this.indices[i];
+
+            let face = [];
+            for (let v = 0; v < 3; v++)
+            {
+                const pos = this.getPosition(vFace[v][0] - 1);
+                const tex = this.getTexCoord(vFace[v][1] - 1);
+                const nor = this.getNormal(vFace[v][2] - 1);
+                face.push(new Vertex(pos, 0xffffff, tex, nor));
+            }
+
+            face = new Face(face[0], face[1], face[2]);
+            face.calcTangentAndBiTangent();
+
+            this.faces.push(face);
+        }
     }
 
-    getVertex(pos, tex, nor)
+    getPosition(pos)
     {
-        const vPos = new Vector3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
-        const vTex = new Vector2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
-        const vNor = new Vector3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
+        return new Vector3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
+    }
 
-        return new Vertex(vPos, 0xffffff, vTex, vNor);
+    getTexCoord(tex)
+    {
+        return new Vector2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
+    }
+
+    getNormal(nor)
+    {
+        return new Vector3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
     }
 }
 
@@ -442,7 +510,7 @@ class View extends Bitmap
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, delta, 0);
+        let matrix = new Matrix4().rotate(0, 0, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
@@ -488,12 +556,14 @@ class View extends Bitmap
 
 
         renderFlag = 0;
-        this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
+        this.transform = new Matrix4().translate(2, 1, -5);
+        // this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
         this.drawModel(models.sphere, textures.white);
 
-        renderFlag = 0;
+        renderFlag = RENDER_TANGENT;
+        // this.transform = new Matrix4().translate(-2, 1, -5);
         this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
-        this.drawModel(models.man, textures.white);
+        this.drawModel(models.cube, textures.pepe);
 
         this.drawSkyBox(time / 100.0);
     }
@@ -636,11 +706,32 @@ class View extends Bitmap
         v1 = this.modelTransform(v1);
         v2 = this.modelTransform(v2);
 
-        // Render Face Normal
+        // Render Face normal
         if (((renderFlag >> 2) & 0xf) == 1)
         {
             const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
             this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.mul(0.2)), 0xff00ff));
+        }
+
+        // Render Tangent
+        if (((renderFlag >> 4) & 0xf) == 1)
+        {
+            const pos = v0.pos;
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0xff0000));
+        }
+
+        // Render BiTangent
+        if (((renderFlag >> 5) & 0xf) == 1)
+        {
+            const pos = v0.pos;
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0x00ff00));
+        }
+
+        // Render Vertex normal
+        if (((renderFlag >> 6) & 0xf) == 1)
+        {
+            const pos = v0.pos;
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(0.2)), 0x0000ff));
         }
 
         v0 = this.playerTransform(v0);
@@ -786,21 +877,11 @@ class View extends Bitmap
         this.setTexture(tex);
         renderFlag |= RENDER_CCW;
 
-        for (let i = 0; i < model.indices.length; i++)
+        for (let i = 0; i < model.faces.length; i++)
         {
-            let face = model.indices[i];
+            const face = model.faces[i];
 
-            let vertices = [];
-            for (let v = 0; v < 3; v++)
-            {
-                const pos = face[v][0] - 1;
-                const tex = face[v][1] - 1;
-                const nor = face[v][2] - 1;
-
-                vertices.push(model.getVertex(pos, tex, nor));
-            }
-
-            this.drawTriangle(vertices[0], vertices[1], vertices[2]);
+            this.drawTriangle(face.v0, face.v1, face.v2);
         }
         renderFlag = 0;
     }
@@ -895,19 +976,24 @@ class View extends Bitmap
 
     playerTransform(v)
     {
-        const pos = player.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, -v.pos.z));
-        let normal = undefined;
-        if (v.normal != undefined) normal = player.cameraTransform.mulVector(new Vector3(v.normal.x, v.normal.y, v.normal.z), 0)
+        const newPos = player.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, -v.pos.z));
+        let newNor = undefined;
+        if (v.normal != undefined) newNor = player.cameraTransform.mulVector(v.normal, 0).normalized();
+        let newTan = undefined;
+        if (v.tangent != undefined) newTan = player.cameraTransform.mulVector(v.tangent, 0).normalized();
 
-        return new Vertex(pos, v.color, v.texCoord, normal);
+        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan);
     }
 
     modelTransform(v)
     {
         const newPos = this.transform.mulVector(v.pos, 1);
-        const newNor = this.transform.mulVector(v.normal, 0);
+        let newNor = undefined;
+        if (v.normal != undefined) newNor = this.transform.mulVector(v.normal, 0).normalized();
+        let newTan = undefined;
+        if (v.tangent != undefined) newTan = this.transform.mulVector(v.tangent, 0).normalized();
 
-        return new Vertex(newPos, v.color, v.texCoord, newNor);
+        return new Vertex(newPos, v.color, v.texCoord, newNor, newTan);
     }
 
     renderPixel(p, c)
@@ -1313,6 +1399,8 @@ for (const key in models)
                             break;
                     }
                 }
+
+                // console.log(indices);
 
                 loadedResources++;
 

@@ -11,10 +11,12 @@ let textures =
     "dulri": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
     "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
     "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
-    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
-    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2048, 1536]],
-    "brick": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3.png", [512, 512]],
-    "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [512, 512]],
+    "skybox2": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
+    "skybox3": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2048, 1536]],
+    "brickwall": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/brickwall.png", [1024, 1024]],
+    "brickwall_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/brickwall_normal.png", [1024, 1024]],
+    "brick": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3.png", [1024, 1024]],
+    "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [1024, 1024]],
 };
 
 let models =
@@ -57,9 +59,8 @@ const RENDER_CCW = 1;
 const SET_Z_9999 = 2;
 const RENDER_FACE_NORMAL = 4;
 const EFFECT_NO_LIGHT = 8;
-const RENDER_TANGENT = 16;
-const RENDER_BITANGENT = 32;
-const RENDER_VERTEX_NORMAL = 64;
+const RENDER_VERTEX_NORMAL = 16;
+const RENDER_TANGENT_SPACE = 32;
 
 let renderFlag = 0;
 
@@ -231,6 +232,17 @@ class Matrix4
         this.m10 = 0; this.m11 = 1; this.m12 = 0; this.m13 = 0;
         this.m20 = 0; this.m21 = 0; this.m22 = 1; this.m23 = 0;
         this.m30 = 0; this.m31 = 0; this.m32 = 0; this.m33 = 1;
+    }
+
+    fromAxis(vx, vy, vz)
+    {
+        let res = new Matrix4();
+
+        res.m00 = vx.x; res.m01 = vy.x; res.m02 = vz.x;
+        res.m10 = vx.y; res.m11 = vy.y; res.m12 = vz.y;
+        res.m20 = vx.z; res.m21 = vy.z; res.m22 = vz.z;
+
+        return res;
     }
 
     mulMatrix(right)
@@ -516,17 +528,21 @@ class View extends Bitmap
         super(width, height);
 
         this.zBuffer = new Float32Array(width * height);
-        this.sunIntensity = 1.1;
-        this.sunPosRelativeToZero = new Vector3(1, 1, 1).normalized();
+        this.sunIntensity = 1.3;
+        this.sunPosRelativeToZero = new Vector3(1, 0.4, 0.3).normalized();
         this.ambient = 0.2;
 
         this.transform = new Matrix4();
-        this.texture = textures.sample0;
+        this.difuseMap = textures.sample0;
+        this.normalMap = textures.default_normal;
+        this.normalMapFlipY = true;
+
+        this.tbn = new Matrix4();
     }
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, 0, 0);
+        let matrix = new Matrix4().rotate(0, delta, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
@@ -562,7 +578,7 @@ class View extends Bitmap
         // this.drawPoint(new Vertex(new Vector3(0, 0, 0), 0xff00ff));
 
         renderFlag = RENDER_FACE_NORMAL;
-        this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
+        // this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
 
         // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
@@ -571,26 +587,30 @@ class View extends Bitmap
         renderFlag = 0;
         this.transform = new Matrix4().translate(2, 1, -5);
         // this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
-        this.drawModel(models.sphere, textures.pepe);
+        this.setTexture(textures.pepe);
+        this.drawModel(models.sphere);
 
-        renderFlag = RENDER_VERTEX_NORMAL;
-
+        renderFlag = 0;
         // this.transform = new Matrix4().translate(-2, 1, -5);
         this.transform = new Matrix4().translate(-2, 1, -5);
-        // this.transform = new Matrix4().translate(-2, 1, -5).rotate(0, -time, 0).scale(0.5, 0.5, 0.5);
-        this.drawModel(models.sphere, textures.brick);
+        // this.transform = this.transform.rotate(0, time, 0);
+        this.transform = this.transform.scale(2, 2, 2);
+        // this.setTexture(textures.brickwall, textures.brickwall_normal);
+        this.setTexture(textures.brick, textures.brick_normal, true);
+        this.drawModel(models.sphere);
 
         this.drawSkyBox(time / 100.0);
 
-        renderFlag = RENDER_VERTEX_NORMAL | RENDER_TANGENT | RENDER_BITANGENT;
-        this.transform = new Matrix4().translate(0, 0, -2).rotate(0, time, 0);
-        this.setTexture(textures.pepe);
+        renderFlag = RENDER_TANGENT_SPACE;
+        this.transform = new Matrix4().translate(0, 0, -2);
+        this.transform = this.transform.rotate(0, 0, 0);
+        this.transform = this.transform.scale(2, 2, 2);
+        this.setTexture(textures.brickwall, textures.brickwall_normal);
         let f = new Face(new Vertex(new Vector3(-1, 0, 0), 0xffffff, new Vector2(0, 0)),
             new Vertex(new Vector3(0, 1, 0), 0xffffff, new Vector2(0.5, 1)),
             new Vertex(new Vector3(1, 0, 0), 0xffffff, new Vector2(1, 0)));
         f.calcNormal();
         f.calcTangentAndBiTangent();
-
         this.drawFace(f);
     }
 
@@ -710,6 +730,11 @@ class View extends Bitmap
         return { x0: x0, y0: y0, x1: x1, y1: y1 };
     }
 
+    drawFace(f)
+    {
+        this.drawTriangle(f.v0, f.v1, f.v2);
+    }
+
     drawTriangle(v0, v1, v2)
     {
         // Render CCW
@@ -732,37 +757,39 @@ class View extends Bitmap
         v1 = this.modelTransform(v1);
         v2 = this.modelTransform(v2);
 
+        const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
         // Render Face normal
         if (((renderFlag >> 2) & 1) == 1)
         {
-            const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
-            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.mul(0.2)), 0xff00ff));
-        }
-
-        // Render Tangent
-        if (((renderFlag >> 4) & 1) == 1 && v0.tangent != undefined)
-        {
-            const pos = v0.pos;
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0xff0000));
-        }
-
-        // Render BiTangent
-        if (((renderFlag >> 5) & 1) == 1 && v0.biTangent != undefined)
-        {
-            const pos = v0.pos;
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(0.2)), 0x00ff00));
+            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.add(v1.normal).add(v2.normal).normalized().mul(0.2)), 0xff00ff));
         }
 
         // Render Vertex normal
-        if (((renderFlag >> 6) & 1) == 1)
+        if (((renderFlag >> 4) & 1) == 1)
         {
             const pos = v0.pos;
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(0.2)), 0x0000ff));
+        }
+
+        // Render Tangent space
+        if (((renderFlag >> 5) & 1) == 1 && v0.tangent != undefined)
+        {
+            const pos = v0.pos;
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0xff0000));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(0.2)), 0x00ff00));
             this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(0.2)), 0x0000ff));
         }
 
         v0 = this.playerTransform(v0);
         v1 = this.playerTransform(v1);
         v2 = this.playerTransform(v2);
+
+        if (this.normalMap != undefined)
+        {
+            this.tbn = this.tbn.fromAxis(v0.tangent, v0.biTangent, v0.normal.add(v1.normal).add(v2.normal).normalized());
+            // console.log(this.tbn);
+            // throw "asd";
+        }
 
         if (v0.pos.z < zClipNear && v1.pos.z < zClipNear && v2.pos.z < zClipNear) return;
         else if (v0.pos.z > zClipNear && v1.pos.z > zClipNear && v2.pos.z > zClipNear)
@@ -812,11 +839,6 @@ class View extends Bitmap
                 this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3])
                 break;
         }
-    }
-
-    drawFace(f)
-    {
-        this.drawTriangle(f.v0, f.v1, f.v2);
     }
 
     drawTriangleVS(vp0, vp1, vp2)
@@ -874,45 +896,55 @@ class View extends Bitmap
 
                     const z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
 
-                    const t = lerp3AttributeVec2(vp0.texCoord, vp1.texCoord, vp2.texCoord, w0, w1, w2, z0, z1, z2, z);
+                    const uv = lerp3AttributeVec2(vp0.texCoord, vp1.texCoord, vp2.texCoord, w0, w1, w2, z0, z1, z2, z);
                     // let c = lerp3AttributeVec3(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
-                    const n = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
+                    let n = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
 
-                    let tx = Math.floor(this.texture.width * t.x);
-                    let ty = Math.floor(this.texture.height * (1 - t.y));
+                    if (this.normalMap != undefined)
+                    {
+                        let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
+                        sampledNormal = convertColor2Vector(sampledNormal).normalized();
+                        if (this.normalMapFlipY) sampledNormal.y *= -1;
+                        sampledNormal = this.tbn.mulVector(sampledNormal, 0);
+                        n = sampledNormal;
+                    }
 
-                    if (tx < 0) tx = 0;
-                    if (tx >= this.texture.width) tx = this.texture.width - 1;
-                    if (ty < 0) ty = 0;
-                    if (ty >= this.texture.height) ty = this.texture.height - 1;
-
-                    let c = this.texture.pixels[tx + ty * this.texture.width];
+                    let color = this.sample(this.difuseMap, uv.x, uv.y);
 
                     if (lightCalc)
                     {
                         let diffuse = this.sunDirVS.mul(-1).dot(n) * this.sunIntensity;
                         diffuse = clamp(diffuse, this.ambient, 1.0);
 
-                        c = mulColor(c, diffuse);
+                        color = mulColor(color, diffuse);
                     }
 
-                    this.renderPixel(new Vector3(x, y, z + depthMin), c);
+                    this.renderPixel(new Vector3(x, y, z + depthMin), color);
                 }
             }
         }
     }
 
-    drawModel(model, tex)
+    sample(texture, u, v)
     {
-        this.setTexture(tex);
+        let tx = Math.floor(texture.width * u);
+        let ty = Math.floor(texture.height * (1 - v));
+
+        if (tx < 0) tx = 0;
+        if (tx >= texture.width) tx = texture.width - 1;
+        if (ty < 0) ty = 0;
+        if (ty >= texture.height) ty = texture.height - 1;
+
+        return texture.pixels[tx + ty * texture.width];
+    }
+
+    drawModel(model)
+    {
         renderFlag |= RENDER_CCW;
 
         for (let i = 0; i < model.faces.length; i++)
-        {
-            const face = model.faces[i];
+            this.drawFace(model.faces[i]);
 
-            this.drawFace(face);
-        }
         renderFlag = 0;
     }
 
@@ -1034,7 +1066,7 @@ class View extends Bitmap
     {
         if (!this.checkOutOfScreen(p) && p.z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
         {
-            if (typeof c != "number") c = convertColor(c);
+            if (typeof c != "number") c = convertVector2Color(c);
 
             this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = c;
             this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = p.z;
@@ -1046,9 +1078,11 @@ class View extends Bitmap
         return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
     }
 
-    setTexture(tex)
+    setTexture(diffuseMap, normalMap, normalMapFlipY)
     {
-        this.texture = tex;
+        this.difuseMap = diffuseMap;
+        this.normalMap = normalMap;
+        this.normalMapFlipY = normalMapFlipY;
     }
 }
 
@@ -1187,6 +1221,10 @@ function init()
     sample = new Bitmap(64, 64);
     sample.clear(0xffffff);
     textures["white"] = sample;
+
+    sample = new Bitmap(64, 64);
+    sample.clear(0x8080ff);
+    textures["default_normal"] = sample;
 
     player = new Player();
 }
@@ -1350,16 +1388,25 @@ function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
-function convertColor(v)
+function convertColor2Vector(hex)
 {
-    return (v.x << 16) | (v.y << 8) | v.z;
+    const r = ((hex >> 16) & 0xff) / 127.5 - 1.0;
+    const g = ((hex >> 8) & 0xff) / 127.5 - 1.0;
+    const b = (hex & 0xff) / 127.5 - 1.0;
+
+    return new Vector3(r, g, b);
 }
 
-function mulColor(c, v)
+function convertVector2Color(vec3)
 {
-    const r = clamp(((c >> 16) & 0xff) * v, 0, 255);
-    const g = clamp(((c >> 8) & 0xff) * v, 0, 255);
-    const b = clamp((c & 0xff) * v, 0, 255);
+    return (vec3.x << 16) | (vec3.y << 8) | vec3.z;
+}
+
+function mulColor(hex, per)
+{
+    const r = clamp(((hex >> 16) & 0xff) * per, 0, 255);
+    const g = clamp(((hex >> 8) & 0xff) * per, 0, 255);
+    const b = clamp((hex & 0xff) * per, 0, 255);
 
     return int((r << 16)) | int(g << 8) | int(b);
 }

@@ -1,6 +1,9 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 2;
+let SCALE_INDEX = 2;
+const SCALES = [1, 2, 4, 5, 8, 10, 20];
+let SCALE = SCALES[SCALE_INDEX];
+let btns = [];
 
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
@@ -556,6 +559,8 @@ class View extends Bitmap
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
+
+        console.log(this.width);
     }
 
     renderView()
@@ -1103,6 +1108,39 @@ function init()
     cvs = document.getElementById("canvas");
     gfx = cvs.getContext("2d");
 
+    btns.push(document.getElementById("res1"));
+    btns.push(document.getElementById("res2"));
+    btns.push(document.getElementById("res4"));
+    btns.push(document.getElementById("res5"));
+    btns.push(document.getElementById("res8"));
+    btns.push(document.getElementById("res10"));
+    btns.push(document.getElementById("res20"));
+
+    function reloadView(index)
+    {
+        if (index == SCALES[index]) return;
+
+        const newWidth = WIDTH * SCALE / SCALES[index];
+        const newHeight = HEIGHT * SCALE / SCALES[index];
+        view = new View(newWidth, newHeight);
+
+        WIDTH = newWidth;
+        HEIGHT = newHeight;
+        SCALE = SCALES[index];
+        FOV = HEIGHT;
+
+        for (const btn of btns) btn.style.backgroundColor = "white";
+        btns[index].style.backgroundColor = "black";
+    }
+
+    for (let i = 0; i < btns.length; i++)
+    {
+        const btn = btns[i];
+        btn.onclick = () => reloadView(i);
+    }
+
+    btns[SCALE_INDEX].style.backgroundColor = "black";
+
     for (const key in textures)
     {
         if (Object.hasOwnProperty.call(textures, key))
@@ -1207,9 +1245,6 @@ function init()
     previousTime = new Date().getTime();
 
     view = new View(WIDTH, HEIGHT);
-
-    for (let i = 0; i < WIDTH * HEIGHT; i++)
-        view.pixels[i] = Math.random() * 0xffffff;
 
     let sample = new Bitmap(64, 64);
     for (let i = 0; i < 64 * 64; i++)

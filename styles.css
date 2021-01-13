@@ -1,5 +1,6 @@
 canvas {
     border: 4px solid;
+    display: inline-block;
 }
 
 .title {
@@ -15,9 +16,37 @@ canvas {
 
 .head {
     width: 800px;
-    margin-bottom: -30px;
+    /* margin-bottom: -30px; */
 }
 
+.body {
+    display: flex;
+    width: 800px;
+}
+
+.resbox {
+    margin-left: 4px;
+    display: flex;
+    width: 800px;
+    flex-direction: column;
+}
+
+.res {
+    flex: auto;
+    margin: 4px 1px;
+    border: 4px solid;
+    border-radius: 8px;
+    text-align: center;
+    vertical-align: middle;
+    width: 20px;
+}
+
+.foot {}
+
 h3 {
-    margin-bottom: -20px;
+    margin-bottom: -1rem;
+}
+
+a {
+    color: cornflowerblue;
 }

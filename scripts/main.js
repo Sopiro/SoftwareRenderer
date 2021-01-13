@@ -17,6 +17,8 @@ let textures =
     "brickwall_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/brickwall_normal.png", [1024, 1024]],
     "brick": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3.png", [1024, 1024]],
     "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [1024, 1024]],
+    "rock": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/chipped-stonework_albedo.png", [2048, 2048]],
+    "rock_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/chipped-stonework_normal-ogl.png", [2048, 2048]],
 };
 
 let models =
@@ -25,6 +27,7 @@ let models =
     "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
     "monkey": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj",
     "man": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/man.obj",
+    "sharprock": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sharprockfree.obj",
 };
 
 const resourceReady = Object.keys(textures).length + Object.keys(models).length;
@@ -61,6 +64,7 @@ const RENDER_FACE_NORMAL = 4;
 const EFFECT_NO_LIGHT = 8;
 const RENDER_VERTEX_NORMAL = 16;
 const RENDER_TANGENT_SPACE = 32;
+const FLIP_NORMALMAP_Y = 64;
 
 let renderFlag = 0;
 
@@ -287,6 +291,12 @@ class Matrix4
 
     scale(x, y, z)
     {
+        if (y == undefined && z == undefined)
+        {
+            y = x;
+            z = x;
+        }
+
         let scale = new Matrix4();
         scale.m00 = x;
         scale.m11 = y;
@@ -535,7 +545,6 @@ class View extends Bitmap
         this.transform = new Matrix4();
         this.difuseMap = textures.sample0;
         this.normalMap = textures.default_normal;
-        this.normalMapFlipY = true;
 
         this.tbn = new Matrix4();
     }
@@ -590,14 +599,13 @@ class View extends Bitmap
         this.setTexture(textures.pepe);
         this.drawModel(models.sphere);
 
-        renderFlag = 0;
         // this.transform = new Matrix4().translate(-2, 1, -5);
         this.transform = new Matrix4().translate(-2, 1, -5);
         // this.transform = this.transform.rotate(0, time, 0);
-        this.transform = this.transform.scale(2, 2, 2);
+        this.transform = this.transform.scale(1);
         // this.setTexture(textures.brickwall, textures.brickwall_normal);
-        this.setTexture(textures.brick, textures.brick_normal, true);
-        this.drawModel(models.sphere);
+        this.setTexture(textures.rock, textures.rock_normal, true);
+        this.drawModel(models.sharprock, FLIP_NORMALMAP_Y | RENDER_CCW);
 
         this.drawSkyBox(time / 100.0);
 
@@ -904,7 +912,8 @@ class View extends Bitmap
                     {
                         let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
                         sampledNormal = convertColor2Vector(sampledNormal).normalized();
-                        if (this.normalMapFlipY) sampledNormal.y *= -1;
+                        if (((renderFlag >> 6) & 1) == 1)
+                            sampledNormal.y *= -1;
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
                         n = sampledNormal;
                     }
@@ -938,9 +947,12 @@ class View extends Bitmap
         return texture.pixels[tx + ty * texture.width];
     }
 
-    drawModel(model)
+    drawModel(model, flag)
     {
-        renderFlag |= RENDER_CCW;
+        if (flag == undefined)
+            renderFlag |= RENDER_CCW;
+        else
+            renderFlag = flag;
 
         for (let i = 0; i < model.faces.length; i++)
             this.drawFace(model.faces[i]);

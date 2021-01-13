@@ -1,6 +1,6 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 4;
+let SCALE = 2;
 
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
@@ -10,15 +10,17 @@ let textures =
     "pepe": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/pepe.png", [512, 512]],
     "dulri": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/dulri.png", [256, 256]],
     "container": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/container2.png", [500, 500]],
-    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
-    "skybox2": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
-    "skybox3": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2048, 1536]],
+    // "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox.png", [1024, 768]],
+    // "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox2.png", [1024, 768]],
+    "skybox": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/skybox3.png", [2048, 1536]],
     "brickwall": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/brickwall.png", [1024, 1024]],
     "brickwall_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/brickwall_normal.png", [1024, 1024]],
     "brick": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3.png", [1024, 1024]],
     "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [1024, 1024]],
-    "rock": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/chipped-stonework_albedo.png", [2048, 2048]],
-    "rock_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/chipped-stonework_normal-ogl.png", [2048, 2048]],
+    "stone1": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone1_diffuse.png", [1024, 1024]],
+    "stone1_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone1_normal.png", [1024, 1024]],
+    // "stone2": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_diffuse.png", [1024, 1024]],
+    // "stone2_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_normal.png", [1024, 1024]],
 };
 
 let models =
@@ -27,7 +29,6 @@ let models =
     "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
     "monkey": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj",
     "man": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/man.obj",
-    "sharprock": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sharprockfree.obj",
 };
 
 const resourceReady = Object.keys(textures).length + Object.keys(models).length;
@@ -539,8 +540,8 @@ class View extends Bitmap
 
         this.zBuffer = new Float32Array(width * height);
         this.sunIntensity = 1.3;
-        this.sunPosRelativeToZero = new Vector3(1, 0.4, 0.3).normalized();
-        this.ambient = 0.2;
+        this.sunPosRelativeToZero = new Vector3(1, 0.5, 0.3).normalized();
+        this.ambient = 0.3;
 
         this.transform = new Matrix4();
         this.difuseMap = textures.sample0;
@@ -551,7 +552,7 @@ class View extends Bitmap
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, delta, 0);
+        let matrix = new Matrix4().rotate(0, delta * 2, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
@@ -569,15 +570,15 @@ class View extends Bitmap
         renderFlag = 0;
         for (let i = 0; i < 100; i++)
         {
-            if (i % 2 == 0) this.setTexture(textures.pepe);
-            else this.setTexture(textures.container);
+            if (i % 2 == 0) this.setTexture(textures.brick, textures.brick_normal);
+            else this.setTexture(textures.stone1, textures.stone1_normal);
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
             const rot = new Vector3(time / 5 * (i % 3), time / 10.0 * (i % 5), time / 5 * (i % 7));
-            const scale = new Vector3(1, 1, 1);
+            const scale = new Vector3(0.5);
             this.transform = createTransformMatrix(pos, rot, scale);
 
-            this.drawCube(new Vector3(0, 0, 0), new Vector3(1, 1, 1), true);
+            this.drawModel(models.cube);
         }
 
         // this.drawTriangle(new Vertex(new Vector3(0, 0, -1), 0xfffffff, new Vector2(0, 1)),
@@ -586,7 +587,7 @@ class View extends Bitmap
 
         // this.drawPoint(new Vertex(new Vector3(0, 0, 0), 0xff00ff));
 
-        renderFlag = RENDER_FACE_NORMAL;
+        // renderFlag = RENDER_FACE_NORMAL;
         // this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
 
         // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
@@ -604,22 +605,16 @@ class View extends Bitmap
         // this.transform = this.transform.rotate(0, time, 0);
         this.transform = this.transform.scale(1);
         // this.setTexture(textures.brickwall, textures.brickwall_normal);
-        this.setTexture(textures.rock, textures.rock_normal, true);
-        this.drawModel(models.sharprock, FLIP_NORMALMAP_Y | RENDER_CCW);
+        this.setTexture(textures.brickwall, textures.brickwall_normal, true);
+        this.drawModel(models.cube);
+
+        this.transform = new Matrix4().translate(0, 0, -2);
+        this.transform = this.transform.scale(0.5);
+        this.transform = this.transform.rotate(0, -time / 10, 0);
+        this.setTexture(textures.brick, textures.brick_normal, true);
+        this.drawModel(models.cube);
 
         this.drawSkyBox(time / 100.0);
-
-        renderFlag = RENDER_TANGENT_SPACE;
-        this.transform = new Matrix4().translate(0, 0, -2);
-        this.transform = this.transform.rotate(0, 0, 0);
-        this.transform = this.transform.scale(2, 2, 2);
-        this.setTexture(textures.brickwall, textures.brickwall_normal);
-        let f = new Face(new Vertex(new Vector3(-1, 0, 0), 0xffffff, new Vector2(0, 0)),
-            new Vertex(new Vector3(0, 1, 0), 0xffffff, new Vector2(0.5, 1)),
-            new Vertex(new Vector3(1, 0, 0), 0xffffff, new Vector2(1, 0)));
-        f.calcNormal();
-        f.calcTangentAndBiTangent();
-        this.drawFace(f);
     }
 
     drawPoint(v)
@@ -912,8 +907,7 @@ class View extends Bitmap
                     {
                         let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
                         sampledNormal = convertColor2Vector(sampledNormal).normalized();
-                        if (((renderFlag >> 6) & 1) == 1)
-                            sampledNormal.y *= -1;
+                        if (((renderFlag >> 6) & 1) != 1) sampledNormal.y *= -1;
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
                         n = sampledNormal;
                     }

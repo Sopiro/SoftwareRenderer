@@ -1,6 +1,6 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 4;
+let SCALE = 2;
 
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
@@ -19,8 +19,8 @@ let textures =
     "brick_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/bricks3_normal.png", [1024, 1024]],
     "stone1": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone1_diffuse.png", [1024, 1024]],
     "stone1_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone1_normal.png", [1024, 1024]],
-    // "stone2": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_diffuse.png", [1024, 1024]],
-    // "stone2_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_normal.png", [1024, 1024]],
+    "stone2": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_diffuse.jpg", [1024, 1024]],
+    "stone2_normal": ["https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/imgs/stone2_normal.jpg", [1024, 1024]],
 };
 
 let models =
@@ -552,7 +552,7 @@ class View extends Bitmap
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, delta, 0);
+        let matrix = new Matrix4().rotate(0, delta * 1.5, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
@@ -571,7 +571,7 @@ class View extends Bitmap
         for (let i = 0; i < 100; i++)
         {
             if (i % 2 == 0) this.setTexture(textures.brick, textures.brick_normal);
-            else this.setTexture(textures.stone1, textures.stone1_normal);
+            else this.setTexture(textures.stone2, textures.stone2_normal);
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
             const rot = new Vector3(time / 5 * (i % 3), time / 10.0 * (i % 5), time / 5 * (i % 7));
@@ -605,13 +605,13 @@ class View extends Bitmap
         // this.transform = this.transform.rotate(0, time, 0);
         this.transform = this.transform.scale(1);
         // this.setTexture(textures.brickwall, textures.brickwall_normal);
-        this.setTexture(textures.brickwall, textures.brickwall_normal, true);
+        this.setTexture(textures.stone2, textures.stone2_normal, true);
         this.drawModel(models.cube);
 
         this.transform = new Matrix4().translate(0, 0, -2);
         this.transform = this.transform.scale(0.5);
         this.transform = this.transform.rotate(0, -time / 10, 0);
-        this.setTexture(textures.brick, textures.brick_normal, true);
+        this.setTexture(textures.brickwall, textures.brickwall_normal, true);
         this.drawModel(models.cube);
 
         this.drawSkyBox(time / 100.0);

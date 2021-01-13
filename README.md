@@ -7,4 +7,4 @@ Written in vanilla javascript. No WebGL, No library used.
 Live : https://sopiro.github.io/js_bitmap_renderer/
 
 ## Preview 
-![image](.github/4581641.gif)
+![image](.github/0b3e605.gif)

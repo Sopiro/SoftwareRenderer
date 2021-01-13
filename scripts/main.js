@@ -1,6 +1,6 @@
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
-let SCALE = 2;
+let SCALE = 4;
 
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
@@ -552,7 +552,7 @@ class View extends Bitmap
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, delta * 2, 0);
+        let matrix = new Matrix4().rotate(0, delta, 0);
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);

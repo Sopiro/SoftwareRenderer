@@ -559,8 +559,6 @@ class View extends Bitmap
 
         this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
         this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
-
-        console.log(this.width);
     }
 
     renderView()
@@ -1276,7 +1274,7 @@ function run()
     while (times.length > 0 && times[0] <= now - 1000) times.shift();
 
     const delta = (now - times[times.length - 1]) / 1000.0;
-    // console.log(delta / 1000.0);
+    // console.log("frame time:", delta * 1000.0);
 
     times.push(now);
     fps = times.length;

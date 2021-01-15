@@ -29,7 +29,8 @@ let textures =
 let models =
 {
     "cube": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/cube.obj",
-    "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
+    "sphere": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere.obj",
+    "sphere2": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/sphere2.obj",
     "monkey": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/monkey2.obj",
     "man": "https://raw.githubusercontent.com/Sopiro/js_bitmap_renderer/master/models/man.obj",
 };

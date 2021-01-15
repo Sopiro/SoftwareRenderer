@@ -216,6 +216,11 @@ class Vector3
         return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
     }
 
+    divXYZ(x, y, z)
+    {
+        return new Vector3(this.x / x, this.y / y, this.z / z);
+    }
+
     mul(v)
     {
         return new Vector3(this.x * v, this.y * v, this.z * v);
@@ -224,6 +229,11 @@ class Vector3
     mulElement(v)
     {
         return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
+    }
+
+    mulXYZ(x, y, z)
+    {
+        return new Vector3(this.x * x, this.y * y, this.z * z);
     }
 
     equals(v)
@@ -479,23 +489,23 @@ class Player
         if (keys.up) az--;
         if (keys.down) az++;
 
-        this.pos.x += (Math.cos(-this.rot.y * Math.PI / 180.0) * ax + Math.sin(-this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
-        this.pos.z += (-Math.sin(-this.rot.y * Math.PI / 180.0) * ax + Math.cos(-this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
+        this.pos.x += (Math.cos(this.rot.y * Math.PI / 180.0) * ax + Math.sin(this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
+        this.pos.z += (-Math.sin(this.rot.y * Math.PI / 180.0) * ax + Math.cos(this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
 
         if (keys.space) this.pos.y += this.speed * delta;
         if (keys.c) this.pos.y -= this.speed * delta;
-        if (keys.q) this.rot.y -= this.rotSpeed * delta;
-        if (keys.e) this.rot.y += this.rotSpeed * delta;
+        if (keys.q) this.rot.y += this.rotSpeed * delta;
+        if (keys.e) this.rot.y -= this.rotSpeed * delta;
 
         if (mouse.down)
         {
-            this.rot.y += mouse.dx * 0.1 * this.rotSpeed * delta;
-            this.rot.x += mouse.dy * 0.1 * this.rotSpeed * delta;
+            this.rot.y -= mouse.dx * 0.1 * this.rotSpeed * delta;
+            this.rot.x -= mouse.dy * 0.1 * this.rotSpeed * delta;
         }
 
         const radRot = this.rot.mul(-Math.PI / 180.0);
         this.cameraTransform = new Matrix4().rotate(radRot.x, radRot.y, radRot.z);
-        this.cameraTransform = this.cameraTransform.translate(-this.pos.x, -this.pos.y, this.pos.z);
+        this.cameraTransform = this.cameraTransform.translate(-this.pos.x, -this.pos.y, -this.pos.z);
     }
 }
 
@@ -542,9 +552,10 @@ class View extends Bitmap
         super(width, height);
 
         this.zBuffer = new Float32Array(width * height);
-        this.sunIntensity = 1.3;
+        this.sunIntensity = 1.2;
         this.sunPosRelativeToZero = new Vector3(1, 0.5, 0.3).normalized();
-        this.ambient = 0.3;
+        this.ambient = 0.2;
+        this.specularIntensity = 1000;
 
         this.transform = new Matrix4();
         this.difuseMap = textures.sample0;
@@ -557,8 +568,11 @@ class View extends Bitmap
     {
         let matrix = new Matrix4().rotate(0, delta * 1.5, 0);
 
-        this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0);
-        this.sunDirVS = player.cameraTransform.mulVector(this.sunPosRelativeToZero.mul(-1), 0);
+        this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0).normalized();
+        this.sunDir = this.sunPosRelativeToZero.mul(-1);
+        this.sunDirVS = player.cameraTransform.mulVector(this.sunDir, 0);
+
+        // console.log(this.playerTransform(new Vertex(new Vector3(0, 0, 0))).pos);
     }
 
     renderView()
@@ -596,11 +610,12 @@ class View extends Bitmap
         // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
         // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
 
+        this.drawSkyBox(time / 100.0);
 
         renderFlag = 0;
         this.transform = new Matrix4().translate(2, 1, -5);
         // this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
-        this.setTexture(textures.pepe);
+        this.setTexture(textures.pepe, undefined, 100);
         this.drawModel(models.sphere);
 
         // this.transform = new Matrix4().translate(-2, 1, -5);
@@ -608,21 +623,43 @@ class View extends Bitmap
         // this.transform = this.transform.rotate(0, time, 0);
         this.transform = this.transform.scale(1);
         // this.setTexture(textures.brickwall, textures.brickwall_normal);
-        this.setTexture(textures.stone2, textures.stone2_normal, true);
+        this.setTexture(textures.stone2, textures.stone2_normal, 10.0);
         this.drawModel(models.cube);
 
-        this.transform = new Matrix4().translate(0, 0, -2);
+        this.transform = new Matrix4().translate(-2, 0, -10);
+        // this.transform = this.transform.rotate(0, time, 0);
         this.transform = this.transform.scale(0.5);
-        this.transform = this.transform.rotate(0, -time / 10, 0);
-        this.setTexture(textures.brickwall, textures.brickwall_normal, true);
+        // this.setTexture(textures.brickwall, textures.brickwall_normal);
+        this.setTexture(textures.white);
+        this.drawModel(models.man);
+
+        this.transform = new Matrix4().translate(2, 2, -10);
+        // this.transform = this.transform.rotate(0, time, 0);
+        this.transform = this.transform.scale(1);
+        // this.setTexture(textures.brickwall, textures.brickwall_normal);
+        this.setTexture(textures.white, textures.brick_normal, 10.0);
         this.drawModel(models.cube);
 
-        this.drawSkyBox(time / 100.0);
+        // this.transform = new Matrix4().translate(-1, -1, -2);
+        // this.transform = this.transform.scale(2);
+        // // this.transform = this.transform.rotate(0, -time / 10, 0);
+        // this.setTexture(textures.brickwall, textures.brickwall_normal, 0.5);
+        // const f = new Face(
+        //     new Vertex(new Vector3(0, 0, 0), 0xffffff, new Vector2(0, 0)),
+        //     new Vertex(new Vector3(0, 1, 0), 0xffffff, new Vector2(0, 1)),
+        //     new Vertex(new Vector3(1, 1, 0), 0xffffff, new Vector2(1, 1)));
+
+        // f.calcNormal();
+        // f.calcTangentAndBiTangent();
+
+        // this.drawFace(f);
     }
 
     drawPoint(v)
     {
         v = this.playerTransform(v);
+
+        v0 = this.projectionTransform(v0);
 
         if (v.pos.z < zClipNear) return;
 
@@ -636,6 +673,9 @@ class View extends Bitmap
     {
         v0 = this.playerTransform(v0);
         v1 = this.playerTransform(v1);
+
+        v0 = this.projectionTransform(v0);
+        v1 = this.projectionTransform(v1);
 
         // z-Clipping
         if (v0.pos.z < zClipNear && v1.pos.z < zClipNear) return undefined;
@@ -790,6 +830,10 @@ class View extends Bitmap
         v1 = this.playerTransform(v1);
         v2 = this.playerTransform(v2);
 
+        v0 = this.projectionTransform(v0);
+        v1 = this.projectionTransform(v1);
+        v2 = this.projectionTransform(v2);
+
         if (this.normalMap != undefined)
         {
             this.tbn = this.tbn.fromAxis(v0.tangent, v0.biTangent, v0.normal.add(v1.normal).add(v2.normal).normalized());
@@ -878,11 +922,12 @@ class View extends Bitmap
         if (area < 0) return;
 
         let depthMin = 0;
-        let lightCalc = true;
+        let calcLight = true;
 
         if (((renderFlag >> 1) & 1) == 1) depthMin = 9999;
-        if (((renderFlag >> 3) & 1) == 1) lightCalc = false;
+        if (((renderFlag >> 3) & 1) == 1) calcLight = false;
 
+        let a = false;
         for (let y = minY; y < maxY; y++)
         {
             for (let x = minX; x < maxX; x++)
@@ -903,8 +948,9 @@ class View extends Bitmap
                     const z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
 
                     const uv = lerp3AttributeVec2(vp0.texCoord, vp1.texCoord, vp2.texCoord, w0, w1, w2, z0, z1, z2, z);
+                    const pixelPos = vp0.pos.mul(w0).add(vp1.pos.mul(w1)).add(vp2.pos.mul(w2)).mulXYZ(1, 1, -1);
                     // let c = lerp3AttributeVec3(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
-                    let n = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
+                    let pixelNormal = lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
 
                     if (this.normalMap != undefined)
                     {
@@ -912,16 +958,26 @@ class View extends Bitmap
                         sampledNormal = convertColor2Vector(sampledNormal).normalized();
                         if (((renderFlag >> 6) & 1) != 1) sampledNormal.y *= -1;
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
-                        n = sampledNormal;
+                        pixelNormal = sampledNormal.normalized();
                     }
 
                     let color = this.sample(this.difuseMap, uv.x, uv.y);
 
-                    if (lightCalc)
+                    if (calcLight)
                     {
-                        let diffuse = this.sunDirVS.mul(-1).dot(n) * this.sunIntensity;
+                        const toLight = this.sunDirVS.mul(-1).normalized();
+
+                        let diffuse = toLight.dot(pixelNormal) * this.sunIntensity;
                         diffuse = clamp(diffuse, this.ambient, 1.0);
 
+                        if(this.specularIntensity != undefined)
+                        {
+                            const toView = pixelPos.mul(-1).normalized();
+                            const halfway = toLight.add(toView).normalized();                            
+                            let specular = Math.pow(Math.max(pixelNormal.dot(halfway), 0), this.specularIntensity);
+                            diffuse += specular;
+                        }
+                        
                         color = mulColor(color, diffuse);
                     }
 
@@ -1045,9 +1101,14 @@ class View extends Bitmap
         renderFlag = 0;
     }
 
+    projectionTransform(v)
+    {
+        return new Vertex(v.pos.mulXYZ(1, 1, -1), v.color, v.texCoord, v.normal, v.tangent, v.biTangent);
+    }
+
     playerTransform(v)
     {
-        const newPos = player.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, -v.pos.z));
+        const newPos = player.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, v.pos.z));
         let newNor = undefined;
         if (v.normal != undefined) newNor = player.cameraTransform.mulVector(v.normal, 0).normalized();
         let newTan = undefined;
@@ -1087,11 +1148,12 @@ class View extends Bitmap
         return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
     }
 
-    setTexture(diffuseMap, normalMap, normalMapFlipY)
+    setTexture(diffuseMap, normalMap, specularIntensity, normalMapFlipY)
     {
         this.difuseMap = diffuseMap;
         this.normalMap = normalMap;
-        this.normalMapFlipY = normalMapFlipY;
+        this.specularIntensity = specularIntensity;
+        if (normalMapFlipY == true) this.renderFlag = FLIP_NORMALMAP_Y;
     }
 }
 

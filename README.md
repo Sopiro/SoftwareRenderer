@@ -24,7 +24,7 @@ Live : https://sopiro.github.io/js_bitmap_renderer/
 - Skybox
 - OBJ model loading
   - Calculating face normal, tangent vectors
-- Vertex, pixels shading
+- Vertex, Pixel shading
 - Phong shading
 - Blinn phong shading
 - Normal mapping

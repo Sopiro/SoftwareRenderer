@@ -7,7 +7,12 @@ Written in vanilla javascript. No WebGL, No library used.
 Live : https://sopiro.github.io/js_software_renderer/
 
 ## Preview 
-![image](.github/0b3e605.gif)
+
+Post Processing Enabled  
+![image1](.github/c5ba1f7.gif)
+  
+Normal Mapping  
+![image2](.github/0b3e605.gif)
 
 ## Implemented Features
 - Point drawing

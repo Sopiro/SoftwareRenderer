@@ -12,7 +12,7 @@ Live : https://sopiro.github.io/js_bitmap_renderer/
 ## Implemented Features
 - Point drawing
 - Line drawing
-- Triangle rasterisation
+- Triangle rasterization
   - A Parallel Algorithm for Polygon Rasterization. Juan Pineda. Siggraph 1988.
 - Depth buffering
 - Line, Polygon clipping
@@ -30,3 +30,4 @@ Live : https://sopiro.github.io/js_bitmap_renderer/
 - Normal mapping
 - Directional light
 - Resolution changer
+- Post-processing stage

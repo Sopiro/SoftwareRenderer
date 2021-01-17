@@ -31,7 +31,7 @@ canvas {
     flex-direction: column;
 }
 
-.res {
+.opt {
     flex: auto;
     margin: 4px 1px;
     border: 4px solid;

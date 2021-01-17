@@ -3,7 +3,9 @@ let HEIGHT = WIDTH / 4 * 3;
 let SCALE_INDEX = 2;
 const SCALES = [1, 2, 4, 5, 8, 10, 20];
 let SCALE = SCALES[SCALE_INDEX];
-let btns = [];
+
+let resBtns = [];
+let pspBtns = [];
 
 let FOV = HEIGHT / SCALE
 let zClipNear = 0.2;
@@ -70,6 +72,8 @@ const EFFECT_NO_LIGHT = 8;
 const RENDER_VERTEX_NORMAL = 16;
 const RENDER_TANGENT_SPACE = 32;
 const FLIP_NORMALMAP_Y = 64;
+
+let enabledPostProcess = [false, false, true, true, false]
 
 let renderFlag = 0;
 
@@ -212,11 +216,6 @@ class Vector3
         return new Vector3(this.x / v, this.y / v, this.z / v);
     }
 
-    divScalar(v)
-    {
-        return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
-    }
-
     divXYZ(x, y, z)
     {
         return new Vector3(this.x / x, this.y / y, this.z / z);
@@ -225,11 +224,6 @@ class Vector3
     mul(v)
     {
         return new Vector3(this.x * v, this.y * v, this.z * v);
-    }
-
-    mulScalar(v)
-    {
-        return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
     }
 
     mulXYZ(x, y, z)
@@ -563,6 +557,24 @@ class View extends Bitmap
         this.normalMap = textures.default_normal;
 
         this.tbn = new Matrix4();
+
+        this.gaussianBlurKernel = [
+            1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0,
+            2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0,
+            1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0,
+        ];
+
+        this.sharpenKernel = [
+            0.0, -1.0, 0.0,
+            -1.0, 5.0, -1.0,
+            0.0, -1.0, 0.0,
+        ];
+
+        this.edgeKernel = [
+            -1.0, -1.0, -1.0,
+            -1.0, 8.0, -1.0,
+            -1.0, -1.0, -1.0,
+        ];
     }
 
     update(delta)
@@ -578,9 +590,17 @@ class View extends Bitmap
 
     renderView()
     {
+        // this.clear(0xff00ff);
+
         for (let i = 0; i < this.zBuffer.length; i++)
             this.zBuffer[i] = 100000;
 
+        this.renderScene();
+        this.postProcess();
+    }
+
+    renderScene()
+    {
         const r = new Random(123);
 
         const s = 30.0;
@@ -654,6 +674,123 @@ class View extends Bitmap
         // f.calcTangentAndBiTangent();
 
         // this.drawFace(f);
+    }
+
+    postProcess()
+    {
+        // Sharpen
+        if (enabledPostProcess[0])
+        {
+            let result = new Uint32Array(this.width * this.height);
+
+            for (let i = 0; i < this.pixels.length; i++)
+            {
+                const x = i % this.width;
+                const y = Math.floor(i / this.width);
+
+                const kernelResult = this.kernel(this, this.sharpenKernel, x, y);
+
+                result[i] = kernelResult;
+            }
+
+            this.pixels = result;
+        }
+
+        // Edge detection
+        if (enabledPostProcess[1])
+        {
+            let result = new Uint32Array(this.width * this.height);
+
+            for (let i = 0; i < this.pixels.length; i++)
+            {
+                const x = i % this.width;
+                const y = Math.floor(i / this.width);
+
+                const kernelResult = this.kernel(this, this.edgeKernel, x, y);
+
+                result[i] = kernelResult;
+            }
+
+            this.pixels = result;
+        }
+
+        // Vignette & pixel noise
+        if (enabledPostProcess[2] || enabledPostProcess[3])
+        {
+            for (let i = 0; i < this.pixels.length; i++)
+            {
+                const x = i % this.width;
+                const y = Math.floor(i / this.width);
+
+                const p = (x - this.width / 2.0) / (this.width / 5);
+                const q = (y - this.height / 2.0) / (this.height / 5.0);
+
+                let z = this.zBuffer[i];
+                if (z > 5000) z = 3;
+
+                const vignette = 20 - ((z * 3 * (p * p * 1.1))) - ((z * 3 * (q * q * 1.4)));
+                const noise = (x * 5 + (y * 2) & 3) * 16 >> 5 << 5;
+
+                let shade = 0;
+                if (enabledPostProcess[2]) shade += vignette;
+                if (enabledPostProcess[3]) shade += noise;
+
+                const color = this.pixels[x + y * this.width];
+
+                this.pixels[x + y * this.width] = addColor(color, shade);
+            }
+        }
+
+        // Gaussian Blur
+        if (enabledPostProcess[4])
+        {
+            let result = new Uint32Array(this.width * this.height);
+
+            for (let i = 0; i < this.pixels.length; i++)
+            {
+                const x = i % this.width;
+                const y = Math.floor(i / this.width);
+
+                const kernelResult = this.kernel(this, this.gaussianBlurKernel, x, y);
+
+                result[i] = kernelResult;
+            }
+
+            this.pixels = result;
+        }
+    }
+
+    kernel(texture, kernel, xp, yp)
+    {
+        const kernelSize = Math.sqrt(kernel.length);
+
+        let res = new Vector3(0, 0, 0);
+
+        for (let y = 0; y < kernelSize; y++)
+        {
+            for (let x = 0; x < kernelSize; x++)
+            {
+                let xx = xp - Math.floor(kernelSize / 2) + x;
+                let yy = yp - Math.floor(kernelSize / 2) + y;
+
+                if (xx < 0) xx = 0;
+                if (xx >= texture.width) xx = texture.width - 1;
+                if (yy < 0) yy = 0;
+                if (yy >= texture.height) yy = texture.height - 1;
+
+                const sample = convertColor2VectorRange1(texture.pixels[xx + yy * texture.width]);
+
+                const kernelValue = kernel[x + y * kernelSize];
+
+                res = res.add(sample.mul(kernelValue));
+            }
+        }
+
+        res = clipColorVector(res.mul(255));
+
+        res = convertVector2ColorHex(res);
+
+        return res;
     }
 
     drawPoint(v)
@@ -956,7 +1093,7 @@ class View extends Bitmap
                     if (this.normalMap != undefined)
                     {
                         let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
-                        sampledNormal = convertColor2Vector(sampledNormal).normalized();
+                        sampledNormal = convertColor2VectorRange2(sampledNormal).normalized();
                         if (((renderFlag >> 6) & 1) != 1) sampledNormal.y *= -1;
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
                         pixelNormal = sampledNormal.normalized();
@@ -971,14 +1108,14 @@ class View extends Bitmap
                         let diffuse = toLight.dot(pixelNormal) * this.sunIntensity;
                         diffuse = clamp(diffuse, this.ambient, 1.0);
 
-                        if(this.specularIntensity != undefined)
+                        if (this.specularIntensity != undefined)
                         {
                             const toView = pixelPos.mul(-1).normalized();
-                            const halfway = toLight.add(toView).normalized();                            
+                            const halfway = toLight.add(toView).normalized();
                             let specular = Math.pow(Math.max(pixelNormal.dot(halfway), 0), this.specularIntensity);
                             diffuse += specular;
                         }
-                        
+
                         color = mulColor(color, diffuse);
                     }
 
@@ -1137,7 +1274,7 @@ class View extends Bitmap
     {
         if (!this.checkOutOfScreen(p) && p.z < this.zBuffer[p.x + (HEIGHT - 1 - p.y) * WIDTH])
         {
-            if (typeof c != "number") c = convertVector2Color(c);
+            if (typeof c != "number") c = convertVector2ColorHex(c);
 
             this.pixels[p.x + (HEIGHT - 1 - p.y) * this.width] = c;
             this.zBuffer[p.x + (HEIGHT - 1 - p.y) * this.width] = p.z;
@@ -1169,13 +1306,13 @@ function init()
     cvs = document.getElementById("canvas");
     gfx = cvs.getContext("2d");
 
-    btns.push(document.getElementById("res1"));
-    btns.push(document.getElementById("res2"));
-    btns.push(document.getElementById("res4"));
-    btns.push(document.getElementById("res5"));
-    btns.push(document.getElementById("res8"));
-    btns.push(document.getElementById("res10"));
-    btns.push(document.getElementById("res20"));
+    resBtns.push(document.getElementById("res1"));
+    resBtns.push(document.getElementById("res2"));
+    resBtns.push(document.getElementById("res4"));
+    resBtns.push(document.getElementById("res5"));
+    resBtns.push(document.getElementById("res8"));
+    resBtns.push(document.getElementById("res10"));
+    resBtns.push(document.getElementById("res20"));
 
     function reloadView(index)
     {
@@ -1190,17 +1327,36 @@ function init()
         SCALE = SCALES[index];
         FOV = HEIGHT;
 
-        for (const btn of btns) btn.style.backgroundColor = "white";
-        btns[index].style.backgroundColor = "black";
+        for (const btn of resBtns) btn.style.backgroundColor = "white";
+        resBtns[index].style.backgroundColor = "black";
     }
 
-    for (let i = 0; i < btns.length; i++)
+    for (let i = 0; i < resBtns.length; i++)
     {
-        const btn = btns[i];
+        const btn = resBtns[i];
         btn.onclick = () => reloadView(i);
     }
 
-    btns[SCALE_INDEX].style.backgroundColor = "black";
+    resBtns[SCALE_INDEX].style.backgroundColor = "black";
+
+    pspBtns.push(document.getElementById("psp1"));
+    pspBtns.push(document.getElementById("psp2"));
+    pspBtns.push(document.getElementById("psp3"));
+    pspBtns.push(document.getElementById("psp4"));
+    pspBtns.push(document.getElementById("psp5"));
+
+    function setPostProcess(index)
+    {
+        enabledPostProcess[index] = !enabledPostProcess[index];
+        pspBtns[index].style.backgroundColor = enabledPostProcess[index] ? "black" : "white";
+    }
+
+    for (let i = 0; i < pspBtns.length; i++)
+    {
+        const btn = pspBtns[i];
+        btn.onclick = () => setPostProcess(i);
+        if (enabledPostProcess[i]) btn.style.backgroundColor = "black";
+    }
 
     for (const key in textures)
     {
@@ -1490,7 +1646,16 @@ function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
-function convertColor2Vector(hex)
+function convertColor2VectorRange1(hex)
+{
+    const r = ((hex >> 16) & 0xff) / 255.0;
+    const g = ((hex >> 8) & 0xff) / 255.0;
+    const b = (hex & 0xff) / 255.0;
+
+    return new Vector3(r, g, b);
+}
+
+function convertColor2VectorRange2(hex)
 {
     const r = ((hex >> 16) & 0xff) / 127.5 - 1.0;
     const g = ((hex >> 8) & 0xff) / 127.5 - 1.0;
@@ -1499,9 +1664,27 @@ function convertColor2Vector(hex)
     return new Vector3(r, g, b);
 }
 
-function convertVector2Color(vec3)
+function convertColor2VectorRange255(hex)
+{
+    const r = ((hex >> 16) & 0xff);
+    const g = ((hex >> 8) & 0xff);
+    const b = (hex & 0xff);
+
+    return new Vector3(r, g, b);
+}
+
+function convertVector2ColorHex(vec3)
 {
     return (vec3.x << 16) | (vec3.y << 8) | vec3.z;
+}
+
+function clipColorVector(vec3)
+{
+    const nr = clamp(vec3.x, 0, 255);
+    const ng = clamp(vec3.y, 0, 255);
+    const nb = clamp(vec3.z, 0, 255);
+
+    return new Vector3(nr, ng, nb);
 }
 
 function mulColor(hex, per)
@@ -1509,6 +1692,15 @@ function mulColor(hex, per)
     const r = clamp(((hex >> 16) & 0xff) * per, 0, 255);
     const g = clamp(((hex >> 8) & 0xff) * per, 0, 255);
     const b = clamp((hex & 0xff) * per, 0, 255);
+
+    return int((r << 16)) | int(g << 8) | int(b);
+}
+
+function addColor(hex, val)
+{
+    const r = clamp(((hex >> 16) & 0xff) + val, 0, 255);
+    const g = clamp(((hex >> 8) & 0xff) + val, 0, 255);
+    const b = clamp((hex & 0xff) + val, 0, 255);
 
     return int((r << 16)) | int(g << 8) | int(b);
 }

@@ -212,7 +212,7 @@ class Vector3
         return new Vector3(this.x / v, this.y / v, this.z / v);
     }
 
-    divElement(v)
+    divScalar(v)
     {
         return new Vector3(this.x / v.x, this.y / v.y, this.z / v.z);
     }
@@ -227,7 +227,7 @@ class Vector3
         return new Vector3(this.x * v, this.y * v, this.z * v);
     }
 
-    mulElement(v)
+    mulScalar(v)
     {
         return new Vector3(this.x * v.x, this.y * v.y, this.z * v.z);
     }

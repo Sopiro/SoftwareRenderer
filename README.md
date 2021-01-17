@@ -4,7 +4,7 @@ Software rendering with HTML5 canvas and Javascript.
 Written in vanilla javascript. No WebGL, No library used.
 
 ## Play
-Live : https://sopiro.github.io/js__renderer/
+Live : https://sopiro.github.io/js_software_renderer/
 
 ## Preview 
 ![image](.github/0b3e605.gif)

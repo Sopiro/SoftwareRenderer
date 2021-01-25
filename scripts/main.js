@@ -1,3 +1,5 @@
+'use strict'
+
 let WIDTH = 800;
 let HEIGHT = WIDTH / 4 * 3;
 let SCALE_INDEX = 2;
@@ -1458,8 +1460,6 @@ function init()
 
     WIDTH = WIDTH / SCALE;
     HEIGHT = HEIGHT / SCALE;
-
-    previousTime = new Date().getTime();
 
     view = new View(WIDTH, HEIGHT);
 

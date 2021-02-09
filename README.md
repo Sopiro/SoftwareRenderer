@@ -19,6 +19,7 @@ Normal Mapping
 - Line drawing
 - Triangle rasterization
   - A Parallel Algorithm for Polygon Rasterization. Juan Pineda. Siggraph 1988.
+  - [Explained](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage)
 - Depth buffering
 - Line, Polygon clipping
 - Model transform, Camera transform

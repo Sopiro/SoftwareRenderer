@@ -610,8 +610,8 @@ class View extends Bitmap
         renderFlag = 0;
         for (let i = 0; i < 100; i++)
         {
-            if (i % 2 == 0) this.setTexture(textures.brick, textures.brick_normal);
-            else this.setTexture(textures.stone2, textures.stone2_normal);
+            if (i % 2 == 0) this.setTexture(textures.pepe, textures.brick_normal);
+            else this.setTexture(textures.dulri, textures.stone2_normal);
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
             const rot = new Vector3(time / 5 * (i % 3), time / 10.0 * (i % 5), time / 5 * (i % 7));
@@ -639,7 +639,7 @@ class View extends Bitmap
         this.transform = new Matrix4().translate(2, 1, -5);
         // this.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
         this.setTexture(textures.pepe, undefined, 100);
-        this.drawModel(models.sphere);
+        this.drawModel(models.sphere2);
 
         // this.transform = new Matrix4().translate(-2, 1, -5);
         this.transform = new Matrix4().translate(-2, 1, -5);
@@ -731,7 +731,7 @@ class View extends Bitmap
                 if (z > 5000) z = 3;
 
                 const vignette = 20 - ((z * 3 * (p * p * 1.1))) - ((z * 3 * (q * q * 1.4)));
-                const noise = (x * 5 + (y * 2) & 3) * 16 >> 5 << 5;
+                const noise = (x * 5 + (y * 2) & 3) * 16 >> 3 << 3;
 
                 let shade = 0;
                 if (enabledPostProcess[2]) shade += vignette;

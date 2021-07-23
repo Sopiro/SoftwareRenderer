@@ -6,7 +6,7 @@ Written in vanilla javascript. No WebGL, No library used.
 [Video](https://youtu.be/EGpyw_Su2r0)
 
 ## Play
-Live Demo: https://sopiro.github.io/js_software_renderer/
+Live Demo: https://sopiro.github.io/Software_Renderer_JS/
 
 ## Preview 
 

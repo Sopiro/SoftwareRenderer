@@ -48,7 +48,9 @@ let fps;
 let started = false;
 
 let cvs;
+let tmpCvs;
 let gfx;
+let tmpGfx;
 
 let frameCounterElement;
 
@@ -75,7 +77,7 @@ const RENDER_VERTEX_NORMAL = 16;
 const RENDER_TANGENT_SPACE = 32;
 const FLIP_NORMALMAP_Y = 64;
 
-let enabledPostProcess = [false, false, true, true, false]
+let enabledPostProcess = [false, false, true, false, false]
 
 let renderFlag = 0;
 
@@ -660,7 +662,7 @@ class View extends Bitmap
         // this.transform = this.transform.rotate(0, time, 0);
         this.transform = this.transform.scale(1);
         // this.setTexture(textures.brickwall, textures.brickwall_normal);
-        this.setTexture(textures.white, textures.brick_normal, 10.0);
+        this.setTexture(textures.brick, textures.brick_normal, 10.0);
         this.drawModel(models.cube);
 
         // this.transform = new Matrix4().translate(-1, -1, -2);
@@ -1308,6 +1310,9 @@ function init()
     cvs = document.getElementById("canvas");
     gfx = cvs.getContext("2d");
 
+    tmpCvs = document.createElement("canvas");
+    tmpGfx = tmpCvs.getContext("2d");
+
     resBtns.push(document.getElementById("res1"));
     resBtns.push(document.getElementById("res2"));
     resBtns.push(document.getElementById("res4"));
@@ -1328,6 +1333,9 @@ function init()
         HEIGHT = newHeight;
         SCALE = SCALES[index];
         FOV = HEIGHT;
+
+        tmpCvs.width = WIDTH;
+        tmpCvs.height = HEIGHT;
 
         for (const btn of resBtns) btn.style.backgroundColor = "white";
         resBtns[index].style.backgroundColor = "black";
@@ -1504,6 +1512,8 @@ function run()
         started = true;
         cvs.setAttribute("width", WIDTH * SCALE + "px");
         cvs.setAttribute("height", HEIGHT * SCALE + "px");
+        tmpCvs.setAttribute("width", WIDTH * SCALE + "px");
+        tmpCvs.setAttribute("height", HEIGHT * SCALE + "px");
         gfx.font = "48px verdana";
     }
 
@@ -1537,7 +1547,13 @@ function render()
     view.clear(0x808080);
     view.renderView();
 
-    gfx.putImageData(convertBitmapToImageData(view, SCALE), 0, 0);
+    tmpGfx.putImageData(convertBitmapToImageData(view), 0, 0);
+
+    gfx.save();
+    gfx.imageSmoothingEnabled = false;
+    gfx.scale(SCALE, SCALE);
+    gfx.drawImage(tmpCvs, 0, 0);
+    gfx.restore();
 }
 
 function convertImageDataToBitmap(imageData, width, height)
@@ -1559,7 +1575,7 @@ function convertImageDataToBitmap(imageData, width, height)
     return res;
 }
 
-function convertBitmapToImageData(bitmap, scale)
+function convertBitmapToImageData(bitmap, scale = 1)
 {
     const res = new ImageData(bitmap.width * scale, bitmap.height * scale);
 
@@ -1572,6 +1588,17 @@ function convertBitmapToImageData(bitmap, scale)
             const r = (bitmapPixel >> 16) & 0xff;
             const g = (bitmapPixel >> 8) & 0xff;
             const b = bitmapPixel & 0xff;
+
+            if (scale == 1)
+            {
+                const ptr = ((x * scale) + ((y * scale)) * res.width) * 4;
+
+                res.data[ptr] = r;
+                res.data[ptr + 1] = g;
+                res.data[ptr + 2] = b;
+                res.data[ptr + 3] = globalAlpha;
+                continue;
+            }
 
             for (let ys = 0; ys < scale; ys++)
             {

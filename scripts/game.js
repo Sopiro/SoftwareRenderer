@@ -46,6 +46,9 @@ export class Game
         this.cvs = document.getElementById("canvas");
         this.gfx = this.cvs.getContext("2d");
 
+        this.gfx.font = "60px verdana";
+        this.gfx.fillText("Loading...", 10, 60);
+
         this.tmpCvs = document.createElement("canvas");
         this.tmpGfx = this.tmpCvs.getContext("2d");
 
@@ -117,22 +120,22 @@ export class Game
                 image.crossOrigin = "Anonymous";
                 image.onload = () =>
                 {
-                    this.cvs.setAttribute("width", imageWidth + "px");
-                    this.cvs.setAttribute("height", imageHeight + "px");
-                    // Loading Resources.textures.
+                    this.tmpCvs.setAttribute("width", imageWidth + "px");
+                    this.tmpCvs.setAttribute("height", imageHeight + "px");
+                    // Loading textures.
 
-                    this.gfx.drawImage(image, 0, 0, imageWidth, imageHeight);
+                    this.tmpGfx.drawImage(image, 0, 0, imageWidth, imageHeight);
 
                     if (key == "skybox")
                     {
                         const size = Util.int(imageWidth / 4);
 
-                        let top = this.gfx.getImageData(size, 0, size, size);
-                        let bottom = this.gfx.getImageData(size, size * 2, size, size);
-                        let front = this.gfx.getImageData(size, size, size, size);
-                        let back = this.gfx.getImageData(size * 3, size, size, size);
-                        let right = this.gfx.getImageData(size * 2, size, size, size);
-                        let left = this.gfx.getImageData(0, size, size, size);
+                        let top = this.tmpGfx.getImageData(size, 0, size, size);
+                        let bottom = this.tmpGfx.getImageData(size, size * 2, size, size);
+                        let front = this.tmpGfx.getImageData(size, size, size, size);
+                        let back = this.tmpGfx.getImageData(size * 3, size, size, size);
+                        let right = this.tmpGfx.getImageData(size * 2, size, size, size);
+                        let left = this.tmpGfx.getImageData(0, size, size, size);
 
                         Resources.textures["skybox_top"] = Util.convertImageDataToBitmap(top, size, size);
                         Resources.textures["skybox_bottom"] = Util.convertImageDataToBitmap(bottom, size, size);
@@ -144,7 +147,7 @@ export class Game
                         return;
                     }
 
-                    image = this.gfx.getImageData(0, 0, imageWidth, imageHeight);
+                    image = this.tmpGfx.getImageData(0, 0, imageWidth, imageHeight);
                     image = Util.convertImageDataToBitmap(image, imageWidth, imageHeight);
 
                     Resources.textures[key] = image;
@@ -250,6 +253,11 @@ export class Game
             this.tmpCvs.setAttribute("width", Constants.WIDTH * Constants.SCALE + "px");
             this.tmpCvs.setAttribute("height", Constants.HEIGHT * Constants.SCALE + "px");
             this.gfx.font = "48px verdana";
+        }
+        if (!this.started)
+        {
+            this.gfx.clearRect(0, 0, this.cvs.width, this.cvs.height);
+            this.gfx.fillText("Loading..." + Util.int(Constants.loadedResources / Constants.resourceReady * 100) + "%", 10, 60);
         }
 
         if (this.started && !this.pause)

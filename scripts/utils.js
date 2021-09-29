@@ -2,8 +2,7 @@ import { Vector2 } from "./vec2.js";
 import { Vector3 } from "./vec3.js";
 import { Bitmap } from "./bitmap.js";
 import { Matrix4 } from "./mat4.js";
-
-let globalAlpha = 255;
+import { Constants } from "./constants.js";
 
 export function convertImageDataToBitmap(imageData, width, height)
 {
@@ -45,7 +44,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                 res.data[ptr] = r;
                 res.data[ptr + 1] = g;
                 res.data[ptr + 2] = b;
-                res.data[ptr + 3] = globalAlpha;
+                res.data[ptr + 3] = Constants.globalAlpha;
                 continue;
             }
 
@@ -58,7 +57,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                     res.data[ptr] = r;
                     res.data[ptr + 1] = g;
                     res.data[ptr + 2] = b;
-                    res.data[ptr + 3] = globalAlpha;
+                    res.data[ptr + 3] = Constants.globalAlpha;
                 }
             }
         }

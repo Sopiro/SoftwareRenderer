@@ -9,3 +9,4 @@ Constants.SCALE = Constants.SCALES[Constants.SCALE_INDEX];
 Constants.FOV = Constants.HEIGHT / Constants.SCALE;
 Constants.resourceReady = Object.keys(Resources.textures).length + Object.keys(Resources.models).length;
 Constants.loadedResources = 0;
+Constants.globalAlpha = 255;

@@ -553,7 +553,7 @@ export class View extends Bitmap
         {
             for (let x = minX; x < maxX; x++)
             {
-                let p = new Vector3(x, y);
+                let p = new Vector2(x, y);
 
                 let w0 = v21.cross(p.sub(p1));
                 let w1 = v02.cross(p.sub(p2));

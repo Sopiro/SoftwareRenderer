@@ -3,9 +3,8 @@
 3D Software rendering with HTML5 canvas and Javascript.  
 Written in vanilla javascript. No WebGL, No library used.
 
-Video: https://youtu.be/EGpyw_Su2r0
+Video: https://youtu.be/EGpyw_Su2r0  
 
-## Play
 Live Demo: https://sopiro.github.io/Software_Renderer_JS/
 
 ## Preview 

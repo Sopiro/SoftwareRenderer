@@ -1,7 +1,7 @@
 # Javascript Software Renderer
 
 3D Software rendering with HTML5 canvas and Javascript.  
-Written in vanilla javascript. No WebGL, No library used.
+This program is written in vanilla javascript. No WebGL, No library used.
 
 Video: https://youtu.be/EGpyw_Su2r0  
 

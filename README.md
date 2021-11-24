@@ -5,7 +5,7 @@ This program is written in vanilla javascript. No WebGL, No library used.
 
 Video: https://youtu.be/EGpyw_Su2r0  
 
-Live Demo: https://sopiro.github.io/Software_Renderer_JS/
+Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Preview 
 

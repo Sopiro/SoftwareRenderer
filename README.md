@@ -1,18 +1,18 @@
 # Javascript Software Renderer
 
-3D Software rendering with HTML5 canvas and Javascript.  
+3D Software rendering in HTML canvas with Javascript.  
 This program is written in vanilla javascript. No WebGL, No library used.
 
 Video: https://youtu.be/EGpyw_Su2r0  
 
-Live Demo: https://sopiro.github.io/Software_Renderer_JS/
+Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Preview 
 
-Post Processing Enabled  
+- Post Processing Enabled  
 ![image1](.github/c5ba1f7.gif)
   
-Normal Mapping  
+- Normal Mapping  
 ![image2](.github/0b3e605.gif)
 
 ## Implemented Features

@@ -46,8 +46,6 @@ export class View extends Bitmap
             -1.0, -1.0, -1.0,
         ];
 
-        this.backFaceCulling = false;
-
         this.RENDER_CW = 0;
         this.RENDER_CCW = 1;
         this.SET_Z_9999 = 2;
@@ -405,7 +403,7 @@ export class View extends Bitmap
     drawTriangle(v0, v1, v2)
     {
         // Render CCW
-        if ((this.renderFlag & 1) == 1)
+        if ((this.renderFlag & this.RENDER_CCW) == this.RENDER_CCW)
         {
             const tmp = v0;
             v0 = v1;
@@ -426,20 +424,20 @@ export class View extends Bitmap
 
         const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
         // Render Face normal
-        if (((this.renderFlag >> 2) & 1) == 1)
+        if ((this.renderFlag & this.RENDER_FACE_NORMAL) == this.RENDER_FACE_NORMAL)
         {
             this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.add(v1.normal).add(v2.normal).normalized().mul(0.2)), 0xff00ff));
         }
 
         // Render Vertex normal
-        if (((this.renderFlag >> 4) & 1) == 1)
+        if ((this.renderFlag & this.RENDER_VERTEX_NORMAL) == this.RENDER_VERTEX_NORMAL)
         {
             const pos = v0.pos;
             this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(0.2)), 0x0000ff));
         }
 
         // Render Tangent space
-        if (((this.renderFlag >> 5) & 1) == 1 && v0.tangent != undefined)
+        if ((this.renderFlag & this.RENDER_TANGENT_SPACE) == this.RENDER_TANGENT_SPACE && v0.tangent != undefined)
         {
             const pos = v0.pos;
             this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(0.2)), 0xff0000));
@@ -545,8 +543,8 @@ export class View extends Bitmap
         let depthMin = 0;
         let calcLight = true;
 
-        if (((this.renderFlag >> 1) & 1) == 1) depthMin = 9999;
-        if (((this.renderFlag >> 3) & 1) == 1) calcLight = false;
+        if ((this.renderFlag & this.SET_Z_9999) == this.SET_Z_9999) depthMin = 9999;
+        if ((this.renderFlag & this.EFFECT_NO_LIGHT) == this.EFFECT_NO_LIGHT) calcLight = false;
 
         let a = false;
         for (let y = minY; y < maxY; y++)
@@ -577,7 +575,8 @@ export class View extends Bitmap
                     {
                         let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
                         sampledNormal = Util.convertColor2VectorRange2(sampledNormal).normalized();
-                        if (((this.renderFlag >> 6) & 1) != 1) sampledNormal.y *= -1;
+                        if ((this.renderFlag & this.FLIP_NORMALMAP_Y) != this.FLIP_NORMALMAP_Y)
+                            sampledNormal.y *= -1;
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
                         pixelNormal = sampledNormal.normalized();
                     }
@@ -774,6 +773,6 @@ export class View extends Bitmap
         this.difuseMap = diffuseMap;
         this.normalMap = normalMap;
         this.specularIntensity = specularIntensity;
-        if (normalMapFlipY == true) this.renderFlag = this.FLIP_NORMALMAP_Y;
+        if (normalMapFlipY) this.renderFlag |= this.FLIP_NORMALMAP_Y;
     }
 }

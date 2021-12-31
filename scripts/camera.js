@@ -1,13 +1,10 @@
-import { Vector3 } from "./vec3.js";
-import { Matrix4 } from "./mat4.js";
+import { Vector3, Matrix4 } from "./math.js";
+import * as Input from "./input.js";
 
-export class Player
+export class Camera
 {
-    constructor(keys, mouse)
+    constructor()
     {
-        this.keys = keys;
-        this.mouse = mouse;
-
         this.speed = 3.0;
         this.rotSpeed = 60.0;
 
@@ -16,32 +13,31 @@ export class Player
         this.cameraTransform = new Matrix4();
     }
 
+    // Handle camera movement
     update(delta)
     {
         this.speed = 3.0;
 
-        if (this.keys.shift) this.speed = 6.0;
+        if (Input.isKeyDown("Shift")) this.speed = 6.0;
 
         let ax = 0.0;
         let az = 0.0;
 
-        if (this.keys.left) ax--;
-        if (this.keys.right) ax++;
-        if (this.keys.up) az--;
-        if (this.keys.down) az++;
+        if (Input.isKeyDown("a")) ax--;
+        if (Input.isKeyDown("d")) ax++;
+        if (Input.isKeyDown("w")) az--;
+        if (Input.isKeyDown("s")) az++;
 
         this.pos.x += (Math.cos(this.rot.y * Math.PI / 180.0) * ax + Math.sin(this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
         this.pos.z += (-Math.sin(this.rot.y * Math.PI / 180.0) * ax + Math.cos(this.rot.y * Math.PI / 180.0) * az) * this.speed * delta;
 
-        if (this.keys.space) this.pos.y += this.speed * delta;
-        if (this.keys.c) this.pos.y -= this.speed * delta;
-        if (this.keys.q) this.rot.y += this.rotSpeed * delta;
-        if (this.keys.e) this.rot.y -= this.rotSpeed * delta;
+        if (Input.isKeyDown(" ")) this.pos.y += this.speed * delta;
+        if (Input.isKeyDown("c")) this.pos.y -= this.speed * delta;
 
-        if (this.mouse.down)
+        if (Input.isMouseDown())
         {
-            this.rot.y -= this.mouse.dx * 0.1 * this.rotSpeed * delta;
-            this.rot.x -= this.mouse.dy * 0.1 * this.rotSpeed * delta;
+            this.rot.y -= Input.mouseAcceleration.x * 0.1 * this.rotSpeed * delta;
+            this.rot.x -= -Input.mouseAcceleration.y * 0.1 * this.rotSpeed * delta;
         }
 
         const radRot = this.rot.mul(-Math.PI / 180.0);

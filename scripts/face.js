@@ -1,4 +1,4 @@
-import { Vector3 } from "./vec3.js";
+import { Vector3 } from "./math.js";
 
 export class Face
 {

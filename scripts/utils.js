@@ -1,7 +1,5 @@
-import { Vector2 } from "./vec2.js";
-import { Vector3 } from "./vec3.js";
+import { Vector2, Vector3, Matrix4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
-import { Matrix4 } from "./mat4.js";
 import { Constants } from "./constants.js";
 
 export function convertImageDataToBitmap(imageData, width, height)

@@ -1,6 +1,5 @@
 import { Face } from "./face.js";
-import { Vector2 } from "./vec2.js";
-import { Vector3 } from "./vec3.js";
+import { Vector2, Vector3 } from "./math.js";
 import { Vertex } from "./vertex.js";
 
 export class Model

@@ -1,22 +1,22 @@
-import { Vector2 } from "./vec2.js";
-import { Vector3 } from "./vec3.js";
-import { Matrix4 } from "./mat4.js";
+import { Vector2, Vector3, Matrix4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
 import { Vertex } from "./vertex.js";
 import { Random } from "./random.js";
 import * as Resources from "./resources.js";
 import * as Util from "./utils.js";
 import { Constants } from "./constants.js";
+import * as Input from "./input.js";
 
 export class View extends Bitmap
 {
-    constructor(width, height, player)
+    constructor(width, height, camera)
     {
         super(width, height);
-        this.player = player;
+        this.camera = camera;
 
         this.zClipNear = 0.2;
         this.zBuffer = new Float32Array(width * height);
+        this.sunRotation = 0;
         this.sunIntensity = 1.2;
         this.sunPosRelativeToZero = new Vector3(1, 0.5, 0.3).normalized();
         this.ambient = 0.2;
@@ -61,28 +61,25 @@ export class View extends Bitmap
 
     update(delta)
     {
-        let matrix = new Matrix4().rotate(0, delta * 1.5, 0);
+        if (Input.isKeyDown("q")) this.sunRotation += delta;
+        if (Input.isKeyDown("e")) this.sunRotation -= delta;
 
-        this.sunPosRelativeToZero = matrix.mulVector(this.sunPosRelativeToZero, 0).normalized();
-        this.sunDir = this.sunPosRelativeToZero.mul(-1);
-        this.sunDirVS = this.player.cameraTransform.mulVector(this.sunDir, 0);
+        let matrix = new Matrix4().rotate(0, this.sunRotation, 0);
+
+        this.sunDir = matrix.mulVector(this.sunPosRelativeToZero, 0).normalized().mul(-1);
+        this.sunDirVS = this.camera.cameraTransform.mulVector(this.sunDir, 0);
 
         this.time += delta;
-        // console.log(this.playerTransform(new Vertex(new Vector3(0, 0, 0))).pos);
+        // console.log(this.cameraTransform(new Vertex(new Vector3(0, 0, 0))).pos);
     }
 
-    renderView()
+    render()
     {
         // this.clear(0xff00ff);
-
+        
         for (let i = 0; i < this.zBuffer.length; i++)
             this.zBuffer[i] = 100000;
 
-        this.renderScene();
-    }
-
-    renderScene()
-    {
         const r = new Random(123);
 
         const s = 30.0;
@@ -90,8 +87,10 @@ export class View extends Bitmap
         this.renderFlag = 0;
         for (let i = 0; i < 100; i++)
         {
-            if (i % 2 == 0) this.setTexture(Resources.textures.pepe, Resources.textures.brick_normal);
-            else this.setTexture(Resources.textures.dulri, Resources.textures.stone2_normal);
+            if (i % 2 == 0)
+                this.setTexture(Resources.textures.pepe, Resources.textures.brick_normal);
+            else
+                this.setTexture(Resources.textures.dulri, Resources.textures.stone2_normal);
 
             const pos = new Vector3(r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0, r.nextFloat() * s - s / 2.0);
             const rot = new Vector3(this.time / 5 * (i % 3), this.time / 10.0 * (i % 5), this.time / 5 * (i % 7));
@@ -276,7 +275,7 @@ export class View extends Bitmap
 
     drawPoint(v)
     {
-        v = this.playerTransform(v);
+        v = this.cameraTransform(v);
 
         v0 = this.projectionTransform(v0);
 
@@ -290,8 +289,8 @@ export class View extends Bitmap
 
     drawLine(v0, v1)
     {
-        v0 = this.playerTransform(v0);
-        v1 = this.playerTransform(v1);
+        v0 = this.cameraTransform(v0);
+        v1 = this.cameraTransform(v1);
 
         v0 = this.projectionTransform(v0);
         v1 = this.projectionTransform(v1);
@@ -445,9 +444,9 @@ export class View extends Bitmap
             this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(0.2)), 0x0000ff));
         }
 
-        v0 = this.playerTransform(v0);
-        v1 = this.playerTransform(v1);
-        v2 = this.playerTransform(v2);
+        v0 = this.cameraTransform(v0);
+        v1 = this.cameraTransform(v1);
+        v2 = this.cameraTransform(v2);
 
         v0 = this.projectionTransform(v0);
         v1 = this.projectionTransform(v1);
@@ -676,7 +675,7 @@ export class View extends Bitmap
         this.renderFlag = this.SET_Z_9999 | this.EFFECT_NO_LIGHT;
 
         let size = new Vector3(1000, 1000, 1000);
-        let pos = this.player.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
+        let pos = this.camera.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
         this.transform = new Matrix4().rotate(0, rotation, 0);
 
         const p000 = new Vector3(pos.x, pos.y, pos.z);
@@ -726,15 +725,16 @@ export class View extends Bitmap
         return new Vertex(v.pos.mulXYZ(1, 1, -1), v.color, v.texCoord, v.normal, v.tangent, v.biTangent);
     }
 
-    playerTransform(v)
+    cameraTransform(v)
     {
-        const newPos = this.player.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, v.pos.z));
+        const newPos = this.camera.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, v.pos.z));
+
         let newNor = undefined;
-        if (v.normal != undefined) newNor = this.player.cameraTransform.mulVector(v.normal, 0).normalized();
+        if (v.normal != undefined) newNor = this.camera.cameraTransform.mulVector(v.normal, 0).normalized();
         let newTan = undefined;
-        if (v.tangent != undefined) newTan = this.player.cameraTransform.mulVector(v.tangent, 0).normalized();
+        if (v.tangent != undefined) newTan = this.camera.cameraTransform.mulVector(v.tangent, 0).normalized();
         let newBiTan = undefined;
-        if (v.biTangent != undefined) newBiTan = this.player.cameraTransform.mulVector(v.biTangent, 0).normalized();
+        if (v.biTangent != undefined) newBiTan = this.camera.cameraTransform.mulVector(v.biTangent, 0).normalized();
 
         return new Vertex(newPos, v.color, v.texCoord, newNor, newTan, newBiTan);
     }
@@ -742,6 +742,7 @@ export class View extends Bitmap
     modelTransform(v)
     {
         const newPos = this.transform.mulVector(v.pos, 1);
+
         let newNor = undefined;
         if (v.normal != undefined) newNor = this.transform.mulVector(v.normal, 0).normalized();
         let newTan = undefined;

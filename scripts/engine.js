@@ -1,11 +1,12 @@
-import { Player } from "./player.js";
+import { Camera } from "./camera.js";
 import { Bitmap } from "./bitmap.js";
 import { View } from "./view.js";
 import * as Util from "./utils.js";
 import * as Resources from "./resources.js";
 import { Constants } from "./constants.js";
+import * as Input from "./input.js";
 
-export class Game
+export class Engine
 {
     constructor()
     {
@@ -24,13 +25,9 @@ export class Game
 
         this.frameCounterElement;
 
-        this.pause = false
         this.time = 0;
 
         this.view;
-
-        this.keys = {};
-        this.mouse = { down: false, lastX: 0.0, lastY: 0.0, currX: 0.0, currY: 0.0, dx: 0.0, dy: 0.0 };
 
         this.postprocessEnabled = [false, false, true, false, false];
     }
@@ -66,7 +63,7 @@ export class Game
 
             const newWidth = Constants.WIDTH * Constants.SCALE / Constants.SCALES[index];
             const newHeight = Constants.HEIGHT * Constants.SCALE / Constants.SCALES[index];
-            this.view = new View(newWidth, newHeight, this.player);
+            this.view = new View(newWidth, newHeight, this.camera);
 
             Constants.WIDTH = newWidth;
             Constants.HEIGHT = newHeight;
@@ -156,60 +153,13 @@ export class Game
             }
         }
 
-        window.addEventListener("mousedown", (e) =>
-        {
-            if (e.button != 0) return;
-
-            this.mouse.down = true;
-        }, false);
-        window.addEventListener("mouseup", (e) =>
-        {
-            if (e.button != 0) return;
-
-            this.mouse.down = false;
-        }, false);
-
-        window.addEventListener("keydown", (e) =>
-        {
-            if (e.key == "Escape") this.pause = !this.pause;
-
-            if (e.key == "w" || e.key == "ArrowUp") this.keys.up = true;
-            if (e.key == "a" || e.key == "ArrowLeft") this.keys.left = true;
-            if (e.key == "s" || e.key == "ArrowDown") this.keys.down = true;
-            if (e.key == "d" || e.key == "ArrowRight") this.keys.right = true;
-            if (e.key == " ") this.keys.space = true;
-            if (e.key == "c") this.keys.c = true;
-            if (e.key == "q") this.keys.q = true;
-            if (e.key == "e") this.keys.e = true;
-            if (e.key == "Shift") this.keys.shift = true;
-        });
-
-        window.addEventListener("keyup", (e) =>
-        {
-            if (e.key == "w" || e.key == "ArrowUp") this.keys.up = false;
-            if (e.key == "a" || e.key == "ArrowLeft") this.keys.left = false;
-            if (e.key == "s" || e.key == "ArrowDown") this.keys.down = false;
-            if (e.key == "d" || e.key == "ArrowRight") this.keys.right = false;
-            if (e.key == " ") this.keys.space = false;
-            if (e.key == "c") this.keys.c = false;
-            if (e.key == "q") this.keys.q = false;
-            if (e.key == "e") this.keys.e = false;
-            if (e.key == "Shift") this.keys.shift = false;
-        });
-
-        window.addEventListener("mousemove", (e) =>
-        {
-            this.mouse.currX = e.screenX;
-            this.mouse.currY = e.screenY;
-        });
-
         this.frameCounterElement = document.getElementById("frame_counter");
 
         Constants.WIDTH = Constants.WIDTH / Constants.SCALE;
         Constants.HEIGHT = Constants.HEIGHT / Constants.SCALE;
 
-        this.player = new Player(this.keys, this.mouse);
-        this.view = new View(Constants.WIDTH, Constants.HEIGHT, this.player);
+        this.camera = new Camera();
+        this.view = new View(Constants.WIDTH, Constants.HEIGHT, this.camera);
 
         let sample = new Bitmap(64, 64);
         for (let i = 0; i < 64 * 64; i++)
@@ -231,15 +181,20 @@ export class Game
         sample = new Bitmap(64, 64);
         sample.clear(0x8080ff);
         Resources.textures["default_normal"] = sample;
+
+        Input.init(this);
     }
 
     run()
     {
         const now = performance.now();
-        while (this.times.length > 0 && this.times[0] <= now - 1000) this.times.shift();
+        
+        while (this.times.length > 0 && this.times[0] <= now - 1000)
+            this.times.shift();
 
-        const delta = (now - this.times[this.times.length - 1]) / 1000.0;
-        // console.log("frame time:", delta * 1000.0);
+        let delta = 1.0;
+        if (this.times.length > 0)
+            delta = (now - this.times[this.times.length - 1]) / 1000.0;
 
         this.times.push(now);
         this.fps = this.times.length;
@@ -254,19 +209,20 @@ export class Game
             this.tmpCvs.setAttribute("height", Constants.HEIGHT * Constants.SCALE + "px");
             this.gfx.font = "48px verdana";
         }
+
         if (!this.started)
         {
             this.gfx.clearRect(0, 0, this.cvs.width, this.cvs.height);
             this.gfx.fillText("Loading..." + Util.int(Constants.loadedResources / Constants.resourceReady * 100) + "%", 10, 60);
         }
 
-        if (this.started && !this.pause)
+        if (this.started && !Constants.pause)
         {
             this.update(delta);
             this.render();
             this.time += delta;
         }
-        else if (this.pause)
+        else if (Constants.pause)
         {
             this.gfx.fillText("PAUSE", 4, 40);
         }
@@ -276,19 +232,15 @@ export class Game
 
     update(delta)
     {
-        this.mouse.dx = this.mouse.currX - this.mouse.lastX;
-        this.mouse.dy = this.mouse.currY - this.mouse.lastY;
-        this.mouse.lastX = this.mouse.currX;
-        this.mouse.lastY = this.mouse.currY;
-
-        this.player.update(delta);
+        this.camera.update(delta);
         this.view.update(delta);
+        Input.update();
     }
 
     render()
     {
         this.view.clear(0x808080);
-        this.view.renderView();
+        this.view.render();
         this.view.postProcess(this.postprocessEnabled);
 
         if (true)

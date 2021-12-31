@@ -1,4 +1,133 @@
-import { Vector3 } from "./vec3.js";
+export class Vector2
+{
+    constructor(x, y)
+    {
+        this.x = x;
+        this.y = y;
+    }
+
+    normalize()
+    {
+        const len = this.getLength();
+
+        this.x /= len;
+        this.y /= len;
+    }
+
+    getLength()
+    {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    dot(v)
+    {
+        return this.x * v.x + this.y * v.y;
+    }
+
+    cross(v)
+    {
+        return this.y * v.x - this.x * v.y;
+    }
+
+    add(v)
+    {
+        return new Vector2(this.x + v.x, this.y + v.y);
+    }
+
+    sub(v)
+    {
+        return new Vector2(this.x - v.x, this.y - v.y);
+    }
+
+    div(v)
+    {
+        return new Vector2(this.x / v, this.y / v);
+    }
+
+    mul(v)
+    {
+        return new Vector2(this.x * v, this.y * v);
+    }
+
+    equals(v)
+    {
+        return this.x == v.x && this.y == v.y;
+    }
+}
+
+export class Vector3
+{
+    constructor(x, y, z)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    normalize()
+    {
+        const len = this.getLength();
+
+        this.x /= len;
+        this.y /= len;
+        this.z /= len;
+    }
+
+    normalized()
+    {
+        return this.div(this.getLength());
+    }
+
+    getLength()
+    {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    dot(v)
+    {
+        return this.x * v.x + this.y * v.y + this.z * v.z;
+    }
+
+    cross(v)
+    {
+        return new Vector3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+    }
+
+    add(v)
+    {
+        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
+    }
+
+    sub(v)
+    {
+        return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
+    }
+
+    div(v)
+    {
+        return new Vector3(this.x / v, this.y / v, this.z / v);
+    }
+
+    divXYZ(x, y, z)
+    {
+        return new Vector3(this.x / x, this.y / y, this.z / z);
+    }
+
+    mul(v)
+    {
+        return new Vector3(this.x * v, this.y * v, this.z * v);
+    }
+
+    mulXYZ(x, y, z)
+    {
+        return new Vector3(this.x * x, this.y * y, this.z * z);
+    }
+
+    equals(v)
+    {
+        return this.x == v.x && this.y == v.y && this.z == v.z;
+    }
+}
 
 export class Matrix4
 {

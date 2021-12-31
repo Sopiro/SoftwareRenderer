@@ -3,11 +3,11 @@
 import { Model } from "./model.js";
 import * as Resources from "./resources.js";
 import { Constants } from "./constants.js";
-import { Game } from "./game.js";
+import { Engine } from "./engine.js";
 
 window.onload = () =>
 {
-    new Game().start();
+    new Engine().start();
 }
 
 // Load models, parse OBJ

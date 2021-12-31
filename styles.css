@@ -42,9 +42,13 @@ canvas {
 }
 
 h3 {
-    margin-bottom: -1rem;
+    margin: 0;
 }
 
 a {
     color: cornflowerblue;
+}
+
+p {
+    margin-bottom: 0;
 }

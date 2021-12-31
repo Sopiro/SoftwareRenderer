@@ -12,13 +12,12 @@ export class Bitmap
         for (let y = 0; y < bitmap.height; y++)
         {
             let yy = oy + y;
-            if (yy < 0 || yy >= this.height)
-                continue;
+            if (yy < 0 || yy >= this.height) continue;
+            
             for (let x = 0; x < bitmap.width; x++)
             {
                 let xx = ox + x;
-                if (xx < 0 || xx >= this.width)
-                    continue;
+                if (xx < 0 || xx >= this.width) continue;
 
                 const color = bitmap.pixels[x + y * bitmap.width];
 

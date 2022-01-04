@@ -1,10 +1,12 @@
 import { Camera } from "./camera.js";
 import { Bitmap } from "./bitmap.js";
-import { View } from "./view.js";
+import { Renderer } from "./renderer.js";
 import * as Util from "./utils.js";
 import * as Resources from "./resources.js";
 import { Constants } from "./constants.js";
 import * as Input from "./input.js";
+import { Game } from "./game.js";
+import { postProcess } from "./postprocess.js";
 
 export class Engine
 {
@@ -27,7 +29,8 @@ export class Engine
 
         this.time = 0;
 
-        this.view;
+        this.renderer;
+        this.game;
 
         this.postprocessEnabled = [false, false, true, false, false];
     }
@@ -63,7 +66,8 @@ export class Engine
 
             const newWidth = Constants.WIDTH * Constants.SCALE / Constants.SCALES[index];
             const newHeight = Constants.HEIGHT * Constants.SCALE / Constants.SCALES[index];
-            this.view = new View(newWidth, newHeight, this.camera);
+            this.renderer = new Renderer(newWidth, newHeight, this.camera);
+            this.game.r = this.renderer;
 
             Constants.WIDTH = newWidth;
             Constants.HEIGHT = newHeight;
@@ -159,7 +163,8 @@ export class Engine
         Constants.HEIGHT = Constants.HEIGHT / Constants.SCALE;
 
         this.camera = new Camera();
-        this.view = new View(Constants.WIDTH, Constants.HEIGHT, this.camera);
+        this.renderer = new Renderer(Constants.WIDTH, Constants.HEIGHT, this.camera);
+        this.game = new Game(this.renderer, this.camera);
 
         let sample = new Bitmap(64, 64);
         for (let i = 0; i < 64 * 64; i++)
@@ -232,20 +237,19 @@ export class Engine
 
     update(delta)
     {
-        this.camera.update(delta);
-        this.view.update(delta);
+        this.game.update(delta);
         Input.update();
     }
 
     render()
     {
-        this.view.clear(0x808080);
-        this.view.render();
-        this.view.postProcess(this.postprocessEnabled);
+        this.renderer.clear(0x808080);
+        this.game.render();
+        postProcess(this.renderer, this.postprocessEnabled);
 
         if (true)
         {
-            this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.view), 0, 0);
+            this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
             this.gfx.save();
             this.gfx.imageSmoothingEnabled = false;
             this.gfx.scale(Constants.SCALE, Constants.SCALE);
@@ -253,7 +257,7 @@ export class Engine
             this.gfx.restore();
         } else
         {
-            this.gfx.putImageData(Util.convertBitmapToImageData(this.view, Constants.SCALE), 0, 0)
+            this.gfx.putImageData(Util.convertBitmapToImageData(this.renderer, Constants.SCALE), 0, 0)
         }
     }
 }

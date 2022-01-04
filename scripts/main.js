@@ -74,7 +74,6 @@ for (const key in Resources.models)
                 }
 
                 // console.log(indices);
-
                 Constants.loadedResources++;
 
                 Resources.models[key] = new Model(positions, texCoords, normals, indices);

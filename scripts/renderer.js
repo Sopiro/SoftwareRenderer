@@ -44,12 +44,11 @@ export class Renderer extends Bitmap
 
     clear(clearColor)
     {
-        // Skip frame buffer clearing for performance
-        // for (let i = 0; i < this.pixels.length; i++)
-        //     this.pixels[i] = clearColor;
-
-        for (let i = 0; i < this.zBuffer.length; i++)
+        for (let i = 0; i < this.pixels.length; i++)
+        {
+            this.pixels[i] = clearColor;
             this.zBuffer[i] = 100000;
+        }
     }
 
     drawPoint(v)
@@ -362,6 +361,7 @@ export class Renderer extends Bitmap
                     }
 
                     let color = 0;
+
                     if (this.difuseMap == undefined)
                         color = Util.lerp3AttributeVec3(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
                     else
@@ -376,9 +376,9 @@ export class Renderer extends Bitmap
 
                         let specular = 0;
 
+                        // Phong specular reflection
                         if (this.specularIntensity != undefined)
                         {
-                            // Phong reflection model
                             const toView = pixelPos.mul(-1).normalized();
 
                             let reflection = pixelNormal.mul(2 * toLight.dot(pixelNormal)).sub(toLight).normalized();

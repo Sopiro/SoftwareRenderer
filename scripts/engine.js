@@ -136,8 +136,8 @@ export class Engine
                 {
                     this.tmpCvs.setAttribute("width", imageWidth + "px");
                     this.tmpCvs.setAttribute("height", imageHeight + "px");
-                    // Loading textures.
-
+                    
+                    // Loading textures
                     this.tmpGfx.drawImage(image, 0, 0, imageWidth, imageHeight);
 
                     if (key == "skybox")

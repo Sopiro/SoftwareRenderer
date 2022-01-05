@@ -14,7 +14,7 @@ export class Face
         const edge1 = this.v1.pos.sub(this.v0.pos);
         const edge2 = this.v2.pos.sub(this.v0.pos);
 
-        const normal = edge2.cross(edge1).normalized();
+        const normal = edge1.cross(edge2).normalized();
 
         this.v0.normal = normal;
         this.v1.normal = normal;

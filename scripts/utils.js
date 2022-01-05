@@ -69,9 +69,15 @@ export function int(a)
     return Math.ceil(a);
 }
 
+export function saturate(v)
+{
+    return clamp(v, 0, 1);
+}
+
 export function clamp(v, min, max)
 {
-    return (v < min) ? min : (max < v) ? max : v;
+    return Math.max(min, Math.min(max, v));
+    // return (v < min) ? min : (max < v) ? max : v;
 }
 
 export function lerp(a, b, per)

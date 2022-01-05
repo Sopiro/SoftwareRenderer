@@ -15,6 +15,7 @@ export const EFFECT_NO_LIGHT = 8;
 export const RENDER_VERTEX_NORMAL = 16;
 export const RENDER_TANGENT_SPACE = 32;
 export const FLIP_NORMALMAP_Y = 64;
+export const DISABLE_NORMAL_MAPPING = 128;
 
 export class Renderer extends Bitmap
 {
@@ -28,7 +29,7 @@ export class Renderer extends Bitmap
 
         this.sun = new DirectionalLight();
 
-        this.ambient = 0.2;
+        this.ambient = 0.25;
         this.specularIntensity = 1000;
 
         this.transform = new Matrix4();
@@ -44,7 +45,7 @@ export class Renderer extends Bitmap
     clear(clearColor)
     {
         // Skip frame buffer clearing for performance
-        // for(let i = 0; i < this.pixels.length; i++)
+        // for (let i = 0; i < this.pixels.length; i++)
         //     this.pixels[i] = clearColor;
 
         for (let i = 0; i < this.zBuffer.length; i++)
@@ -199,10 +200,10 @@ export class Renderer extends Bitmap
         v1 = this.modelTransform(v1);
         v2 = this.modelTransform(v2);
 
-        const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
         // Render Face normal
         if ((this.renderFlag & RENDER_FACE_NORMAL) == RENDER_FACE_NORMAL)
         {
+            const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
             this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.add(v1.normal).add(v2.normal).normalized().mul(0.2)), 0xff00ff));
         }
 
@@ -233,8 +234,6 @@ export class Renderer extends Bitmap
         if (this.normalMap != undefined)
         {
             this.tbn = this.tbn.fromAxis(v0.tangent, v0.biTangent, v0.normal.add(v1.normal).add(v2.normal).normalized());
-            // console.log(this.tbn);
-            // throw "asd";
         }
 
         if (v0.pos.z < this.zClipNear && v1.pos.z < this.zClipNear && v2.pos.z < this.zClipNear) return;
@@ -349,15 +348,24 @@ export class Renderer extends Bitmap
 
                     if (this.normalMap != undefined)
                     {
-                        let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
-                        sampledNormal = Util.convertColor2VectorRange2(sampledNormal).normalized();
-                        if ((this.renderFlag & FLIP_NORMALMAP_Y) != FLIP_NORMALMAP_Y)
-                            sampledNormal.y *= -1;
-                        sampledNormal = this.tbn.mulVector(sampledNormal, 0);
-                        pixelNormal = sampledNormal.normalized();
+                        if ((this.renderFlag & DISABLE_NORMAL_MAPPING) != DISABLE_NORMAL_MAPPING)
+                        {
+                            let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
+                            sampledNormal = Util.convertColor2VectorRange2(sampledNormal).normalized();
+
+                            if ((this.renderFlag & FLIP_NORMALMAP_Y) != FLIP_NORMALMAP_Y)
+                                sampledNormal.y *= -1;
+
+                            sampledNormal = this.tbn.mulVector(sampledNormal, 0);
+                            pixelNormal = sampledNormal.normalized();
+                        }
                     }
 
-                    let color = this.sample(this.difuseMap, uv.x, uv.y);
+                    let color = 0;
+                    if (this.difuseMap == undefined)
+                        color = Util.lerp3AttributeVec3(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
+                    else
+                        color = this.sample(this.difuseMap, uv.x, uv.y);
 
                     if (calcLight)
                     {
@@ -366,15 +374,18 @@ export class Renderer extends Bitmap
                         let diffuse = toLight.dot(pixelNormal) * this.sun.intensity;
                         diffuse = Util.clamp(diffuse, this.ambient, 1.0);
 
+                        let specular = 0;
+
                         if (this.specularIntensity != undefined)
                         {
+                            // Phong reflection model
                             const toView = pixelPos.mul(-1).normalized();
-                            const halfway = toLight.add(toView).normalized();
-                            let specular = Math.pow(Math.max(pixelNormal.dot(halfway), 0), this.specularIntensity);
-                            diffuse += specular;
+
+                            let reflection = pixelNormal.mul(2 * toLight.dot(pixelNormal)).sub(toLight).normalized();
+                            specular = Math.pow(Math.max(0, toView.dot(reflection)), this.specularIntensity);
                         }
 
-                        color = Util.mulColor(color, diffuse);
+                        color = Util.mulColor(color, diffuse + specular);
                     }
 
                     this.renderPixel(new Vector3(x, y, z + depthMin), color);
@@ -465,7 +476,7 @@ export class Renderer extends Bitmap
         return p.x < 0 || p.x >= this.width || p.y < 0 || p.y >= this.height;
     }
 
-    setTexture(diffuseMap, normalMap, specularIntensity, normalMapFlipY)
+    setMaterial(diffuseMap, normalMap, specularIntensity, normalMapFlipY)
     {
         this.difuseMap = diffuseMap;
         this.normalMap = normalMap;
@@ -473,5 +484,10 @@ export class Renderer extends Bitmap
 
         if (normalMapFlipY)
             this.renderFlag |= FLIP_NORMALMAP_Y;
+    }
+
+    toggleRenderFlag(flag)
+    {
+        this.defaultRenderFlag = ((this.defaultRenderFlag & flag) == flag) ? this.defaultRenderFlag ^ flag : this.defaultRenderFlag | flag;
     }
 }

@@ -4,9 +4,11 @@ export class DirectionalLight
 {
     constructor()
     {
-        this.rotation = 0;
-        this.intensity = 1.2;
-        this.posRelativeToZero = new Vector3(1, 0.5, 0.3).normalized();
-        this.dirVS = new Vector3();
+        this.rotation = new Vector3(0, 0, 0);
+
+        this.intensity = 1.0;
+        this.posRelativeToZero = new Vector3(1, 1, 0.7).normalized();
+        this.dirVS = new Vector3(); // Light direction in the view space
+        this.color = 0xffffff;
     }
 }

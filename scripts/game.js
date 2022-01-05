@@ -1,10 +1,8 @@
 import { Vector2, Vector3, Matrix4 } from "./math.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
-import * as Util from "./utils.js";
 import * as Input from "./input.js";
-import { Random } from "./random.js";
-import { SET_Z_9999, EFFECT_NO_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE } from "./renderer.js";
+import { SET_Z_9999, EFFECT_NO_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE, DISABLE_NORMAL_MAPPING } from "./renderer.js";
 
 export class Game
 {
@@ -20,10 +18,10 @@ export class Game
     update(delta)
     {
         // Handle camera movement
-        let speed = 3.0;
+        let speed = 5.0;
         let rotSpeed = 60.0;
 
-        if (Input.isKeyDown("Shift")) speed = 6.0;
+        if (Input.isKeyDown("Shift")) speed *= 1.5;
 
         let ax = 0.0;
         let az = 0.0;
@@ -32,6 +30,12 @@ export class Game
         if (Input.isKeyDown("d")) ax++;
         if (Input.isKeyDown("w")) az--;
         if (Input.isKeyDown("s")) az++;
+
+        if (new Vector2(ax, az).getLength() > 1)
+        {
+            ax /= 1.414;
+            az /= 1.414;
+        }
 
         this.camera.pos.x += (Math.cos(this.camera.rot.y * Math.PI / 180.0) * ax + Math.sin(this.camera.rot.y * Math.PI / 180.0) * az) * speed * delta;
         this.camera.pos.z += (-Math.sin(this.camera.rot.y * Math.PI / 180.0) * ax + Math.cos(this.camera.rot.y * Math.PI / 180.0) * az) * speed * delta;
@@ -50,98 +54,109 @@ export class Game
         this.camera.cameraTransform = this.camera.cameraTransform.translate(-this.camera.pos.x, -this.camera.pos.y, -this.camera.pos.z);
 
         // Control directional light
-        if (Input.isKeyDown("q")) this.r.sun.rotation += delta;
-        if (Input.isKeyDown("e")) this.r.sun.rotation -= delta;
+        if (Input.isKeyDown("q")) this.r.sun.rotation.y += delta;
+        if (Input.isKeyDown("e")) this.r.sun.rotation.y -= delta;
+        if (Input.isKeyDown("r")) this.r.sun.rotation.z += delta;
+        if (Input.isKeyDown("f")) this.r.sun.rotation.z -= delta;
+
         if (Input.isKeyDown("i")) this.r.sun.intensity *= 1.1;
         if (Input.isKeyDown("o")) this.r.sun.intensity *= 1 / 1.1;
 
-        let matrix = new Matrix4().rotate(0, this.r.sun.rotation, 0);
+        let matrix = new Matrix4().rotate(this.r.sun.rotation.x, this.r.sun.rotation.y, this.r.sun.rotation.z);
         let sunDir = matrix.mulVector(this.r.sun.posRelativeToZero, 0).normalized().mul(-1);
         this.r.sun.dirVS = this.camera.cameraTransform.mulVector(sunDir, 0);
 
         this.time += delta;
 
         if (Input.isKeyPressed("n"))
-            this.r.defaultRenderFlag = ((this.r.defaultRenderFlag & RENDER_FACE_NORMAL) == RENDER_FACE_NORMAL) ? 0 : this.r.defaultRenderFlag | RENDER_FACE_NORMAL;
+            this.r.toggleRenderFlag(RENDER_FACE_NORMAL);
 
         if (Input.isKeyPressed("t"))
-            this.r.defaultRenderFlag = ((this.r.defaultRenderFlag & RENDER_TANGENT_SPACE) == RENDER_TANGENT_SPACE) ? 0 : this.r.defaultRenderFlag | RENDER_TANGENT_SPACE;
+            this.r.toggleRenderFlag(RENDER_TANGENT_SPACE);
+
+        if (Input.isKeyPressed("l"))
+            this.r.toggleRenderFlag(EFFECT_NO_LIGHT);
+
+        if (Input.isKeyPressed("m"))
+            this.r.toggleRenderFlag(DISABLE_NORMAL_MAPPING);
     }
 
     render()
     {
-        const rand = new Random(123);
+        this.r.transform = new Matrix4();
+        this.r.drawLine(new Vertex(new Vector3(-6, 0, -5), 0xff0000), new Vertex(new Vector3(-5, 1, -7), 0x00ff00));
 
-        const s = 30.0;
+        this.r.renderFlag = this.r.defaultRenderFlag | EFFECT_NO_LIGHT;
+        this.r.transform = new Matrix4().translate(-3, 0, 0);
+        this.r.setMaterial(undefined, undefined, undefined, undefined);
+        this.r.drawTriangle(
+            new Vertex(new Vector3(-1, 0, -5), 0xff0000),
+            new Vertex(new Vector3(0, 1, -5), 0x00ff00),
+            new Vertex(new Vector3(1, 0, -5), 0x0000ff));
+        this.r.renderFlag = this.r.defaultRenderFlag;
 
-        for (let i = 0; i < 100; i++)
-        {
-            if (i % 2 == 0)
-                this.r.setTexture(Resources.textures.pepe, Resources.textures.brick_normal);
-            else
-                this.r.setTexture(Resources.textures.dulri, Resources.textures.stone2_normal);
+        let xPos = 0;
+        let zPos = -5;
+        let index = 0;
+        let gap = 4;
 
-            const pos = new Vector3(rand.nextFloat() * s - s / 2.0, rand.nextFloat() * s - s / 2.0, rand.nextFloat() * s - s / 2.0);
-            const rot = new Vector3(this.time / 5 * (i % 3), this.time / 10.0 * (i % 5), this.time / 5 * (i % 7));
-            const scale = new Vector3(0.5);
-            this.r.transform = Util.createTransformMatrix(pos, rot, scale);
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.white, undefined, 100);
+        this.r.drawModel(Resources.models.flat_sphere);
 
-            this.r.drawModel(Resources.models.cube);
-        }
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.white, undefined, 100);
+        this.r.drawModel(Resources.models.smooth_sphere);
 
-        // this.r.drawTriangle(new Vertex(new Vector3(0, 0, -1), 0xfffffff, new Vector2(0, 1)),
-        //  new Vertex(new Vector3(0, 0, -2), 0xfffffff, new Vector2(0, 0)),
-        //   new Vertex(new Vector3(1, 0, -2), 0xfffffff, new Vector2(1, 0)), Resources.textures.container);
+        this.r.transform = new Matrix4().translate(xPos + (index * gap), -4, zPos);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.brick, Resources.textures.brick_normal, 10);
+        this.r.drawModel(Resources.models.cube);
 
-        // this.drawPoint(new Vertex(new Vector3(0, 0, 0), 0xff00ff));
+        this.r.transform = new Matrix4().translate(xPos + (index * gap), 0, zPos);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.stone2, Resources.textures.stone2_normal, 10);
+        this.r.drawModel(Resources.models.cube);
 
-        // this.drawLine(new Vertex(this.sunPosRelativeToZero.mul(3).add(new Vector3(0, 0, -3)), 0xff0000), new Vertex(new Vector3(0, 0, -3), 0x00ff00));
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 4, zPos);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.brickwall, Resources.textures.brickwall_normal, 10);
+        this.r.drawModel(Resources.models.cube);
 
-        // this.drawPoint(new Vertex(this.sunPosRelativeToZero.mul(3), 0xffffff));
-        // this.drawLine(new Vertex(new Vector3(-3, -3, -3), 0xff0000), new Vertex(new Vector3(5, 2, -8), 0x00ff00));
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = this.r.transform.scale(0.3);
+        this.r.setMaterial(Resources.textures.barrel_diffuse, Resources.textures.barrel_normal, 10);
+        this.r.drawModel(Resources.models.barrel);
+
+        xPos += 2;
+
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = this.r.transform.scale(4);
+        this.r.setMaterial(Resources.textures.diablo_diffuse, Resources.textures.diablo_normal, 10);
+        this.r.drawModel(Resources.models.diablo);
+
+        xPos += 2;
+
+        let r = this.time / 10.0;
+
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(0, r, r);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.pepe, undefined, 30);
+        this.r.drawModel(Resources.models.cube);
+
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(r, r, 0);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.dulri, undefined, 30);
+        this.r.drawModel(Resources.models.cube);
+
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(r, r, r);
+        this.r.transform = this.r.transform.scale(1);
+        this.r.setMaterial(Resources.textures.white, undefined, 30);
+        this.r.drawModel(Resources.models.monkey);
 
         this.drawSkyBox(this.time / 100.0);
-
-        this.r.transform = new Matrix4().translate(2, 1, -5);
-        // this.r.transform = new Matrix4().translate(2, 1, -5).rotate(time, 0, time);
-        this.r.setTexture(Resources.textures.pepe, undefined, 100);
-        this.r.drawModel(Resources.models.sphere2);
-
-        // this.r.transform = new Matrix4().translate(-2, 1, -5);
-        this.r.transform = new Matrix4().translate(-2, 1, -5);
-        // this.r.transform = this.r.transform.rotate(0, time, 0);
-        this.r.transform = this.r.transform.scale(1);
-        // this.setTexture(Resources.textures.brickwall, Resources.textures.brickwall_normal);
-        this.r.setTexture(Resources.textures.stone2, Resources.textures.stone2_normal, 10.0);
-        this.r.drawModel(Resources.models.cube);
-
-        this.r.transform = new Matrix4().translate(-2, 0, -10);
-        // this.r.transform = this.transform.rotate(0, time, 0);
-        this.r.transform = this.r.transform.scale(0.5);
-        // this.r.setTexture(Resources.textures.brickwall, Resources.textures.brickwall_normal);
-        this.r.setTexture(Resources.textures.white);
-        this.r.drawModel(Resources.models.man);
-
-        this.r.transform = new Matrix4().translate(2, 2, -10);
-        // this.transform = this.transform.rotate(0, time, 0);
-        this.r.transform = this.r.transform.scale(1);
-        // this.setTexture(Resources.textures.brickwall, Resources.textures.brickwall_normal);
-        this.r.setTexture(Resources.textures.brick, Resources.textures.brick_normal, 10.0);
-        this.r.drawModel(Resources.models.cube);
-
-        // this.r.transform = new Matrix4().translate(-1, -1, -2);
-        // this.r.transform = this.transform.scale(2);
-        // // this.r.transform = this.transform.rotate(0, -time / 10, 0);
-        // this.r.setTexture(Resources.textures.brickwall, Resources.textures.brickwall_normal, 0.5);
-        // const f = new Face(
-        //     new Vertex(new Vector3(0, 0, 0), 0xffffff, new Vector2(0, 0)),
-        //     new Vertex(new Vector3(0, 1, 0), 0xffffff, new Vector2(0, 1)),
-        //     new Vertex(new Vector3(1, 1, 0), 0xffffff, new Vector2(1, 1)));
-
-        // f.calcNormal();
-        // f.calcTangentAndBiTangent();
-
-        // this.drawFace(f);
     }
 
     drawCube(pos, size, centered)
@@ -205,27 +220,27 @@ export class Game
         const t11 = new Vector2(1, 0);
         const t01 = new Vector2(0, 0);
 
-        this.r.setTexture(Resources.textures.skybox_front);
+        this.r.setMaterial(Resources.textures.skybox_front);
         this.r.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p111, 0xffffff, t10), new Vertex(p101, 0xffffff, t11));
 
-        this.r.setTexture(Resources.textures.skybox_right);
+        this.r.setMaterial(Resources.textures.skybox_right);
         this.r.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p111, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p101, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
 
-        this.r.setTexture(Resources.textures.skybox_left);
+        this.r.setMaterial(Resources.textures.skybox_left);
         this.r.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p011, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p011, 0xffffff, t10), new Vertex(p001, 0xffffff, t11));
 
-        this.r.setTexture(Resources.textures.skybox_back);
+        this.r.setMaterial(Resources.textures.skybox_back);
         this.r.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p110, 0xffffff, t00), new Vertex(p010, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p100, 0xffffff, t01), new Vertex(p010, 0xffffff, t10), new Vertex(p000, 0xffffff, t11));
 
-        this.r.setTexture(Resources.textures.skybox_top);
+        this.r.setMaterial(Resources.textures.skybox_top);
         this.r.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p010, 0xffffff, t00), new Vertex(p110, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p011, 0xffffff, t01), new Vertex(p110, 0xffffff, t10), new Vertex(p111, 0xffffff, t11));
 
-        this.r.setTexture(Resources.textures.skybox_bottom);
+        this.r.setMaterial(Resources.textures.skybox_bottom);
         this.r.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p001, 0xffffff, t00), new Vertex(p101, 0xffffff, t10));
         this.r.drawTriangle(new Vertex(p000, 0xffffff, t01), new Vertex(p101, 0xffffff, t10), new Vertex(p100, 0xffffff, t11));
 

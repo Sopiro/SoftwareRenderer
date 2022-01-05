@@ -32,7 +32,7 @@ export class Engine
         this.renderer;
         this.game;
 
-        this.postprocessEnabled = [false, false, true, false, false];
+        this.postprocessEnabled = [false, false, false, false, false];
     }
 
     start()
@@ -43,6 +43,19 @@ export class Engine
 
     init()
     {
+        let body = document.querySelector("body");
+        body.addEventListener("contextmenu", e => e.stopPropagation(), false);
+        body.ondragstart = () => { return false };
+        body.onselectstart = () => { return false };
+
+        window.addEventListener('keydown', function (e)
+        {
+            if (e.key == " " && e.target == document.body)
+            {
+                e.preventDefault();
+            }
+        });
+
         this.cvs = document.getElementById("canvas");
         this.gfx = this.cvs.getContext("2d");
 
@@ -180,7 +193,7 @@ export class Engine
         Resources.textures["sample1"] = sample;
 
         sample = new Bitmap(64, 64);
-        sample.clear(0xffffff);
+        sample.clear(0xdfdfdf);
         Resources.textures["white"] = sample;
 
         sample = new Bitmap(64, 64);
@@ -193,7 +206,7 @@ export class Engine
     run()
     {
         const now = performance.now();
-        
+
         while (this.times.length > 0 && this.times[0] <= now - 1000)
             this.times.shift();
 
@@ -243,7 +256,7 @@ export class Engine
 
     render()
     {
-        this.renderer.clear(0x808080);
+        this.renderer.clear(0xA7CFF7);
         this.game.render();
         postProcess(this.renderer, this.postprocessEnabled);
 

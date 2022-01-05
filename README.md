@@ -4,16 +4,19 @@
 This program is written in vanilla javascript. No WebGL, No library used.
 
 Video: https://youtu.be/EGpyw_Su2r0  
-
 Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Preview 
 
-- Post Processing Enabled  
-![image1](.github/c5ba1f7.gif)
-  
-- Normal Mapping  
-![image2](.github/0b3e605.gif)
+|Post Processing Enabled|Normal Mapping|
+|--|--|
+|![img1](.github/c5ba1f7.gif)|![img2](.github/0b3e605.gif)|
+
+|![img3](.github/1.png)|![img4](.github/2.png)|
+|--|--|
+|![img5](.github/3.png)|![img6](.github/4.png)|
+|![img7](.github/5.png)|![img8](.github/6.png)|
+|![img9](.github/7.png)|![img10](.github/8.png)|
 
 ## Implemented Features
 - Point drawing
@@ -34,7 +37,6 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
   - Calculating face normal, tangent vectors
 - Vertex, Pixel shading
 - Phong shading
-- Blinn phong shading
 - Normal mapping
 - Directional light
 - Resolution changer

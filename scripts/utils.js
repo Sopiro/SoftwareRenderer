@@ -125,7 +125,7 @@ export function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
     return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
-export function convertColor2VectorRange1(hex)
+export function convertColorToVectorRange1(hex)
 {
     const r = ((hex >> 16) & 0xff) / 255.0;
     const g = ((hex >> 8) & 0xff) / 255.0;
@@ -134,7 +134,7 @@ export function convertColor2VectorRange1(hex)
     return new Vector3(r, g, b);
 }
 
-export function convertColor2VectorRange2(hex)
+export function convertColorToVectorRange2(hex)
 {
     const r = ((hex >> 16) & 0xff) / 127.5 - 1.0;
     const g = ((hex >> 8) & 0xff) / 127.5 - 1.0;
@@ -143,7 +143,7 @@ export function convertColor2VectorRange2(hex)
     return new Vector3(r, g, b);
 }
 
-export function convertColor2VectorRange255(hex)
+export function convertColorToVectorRange255(hex)
 {
     const r = ((hex >> 16) & 0xff);
     const g = ((hex >> 8) & 0xff);
@@ -152,7 +152,7 @@ export function convertColor2VectorRange255(hex)
     return new Vector3(r, g, b);
 }
 
-export function convertVector2ColorHex(vec3)
+export function convertVectorToColorHex(vec3)
 {
     return (vec3.x << 16) | (vec3.y << 8) | vec3.z;
 }

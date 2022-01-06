@@ -2,7 +2,7 @@ import { Vector2, Vector3, Matrix4 } from "./math.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
 import * as Input from "./input.js";
-import { SET_Z_9999, EFFECT_NO_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE, DISABLE_NORMAL_MAPPING } from "./renderer.js";
+import { SET_Z_9999, CALC_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE, DISABLE_NORMAL_MAPPING } from "./renderer.js";
 
 export class Game
 {
@@ -72,7 +72,7 @@ export class Game
         // Toggling render flags
         if (Input.isKeyPressed("n")) this.r.toggleRenderFlag(RENDER_FACE_NORMAL);
         if (Input.isKeyPressed("t")) this.r.toggleRenderFlag(RENDER_TANGENT_SPACE);
-        if (Input.isKeyPressed("l")) this.r.toggleRenderFlag(EFFECT_NO_LIGHT);
+        if (Input.isKeyPressed("l")) this.r.toggleRenderFlag(CALC_LIGHT);
         if (Input.isKeyPressed("m")) this.r.toggleRenderFlag(DISABLE_NORMAL_MAPPING);
     }
 
@@ -82,8 +82,8 @@ export class Game
         this.r.transform = new Matrix4();
         this.r.drawLine(new Vertex(new Vector3(-6, 0, -5), 0xff0000), new Vertex(new Vector3(-5, 1, -7), 0x00ff00));
 
-        // Triangle
-        this.r.renderFlag = this.r.defaultRenderFlag | EFFECT_NO_LIGHT;
+        // Trianglesa
+        this.r.renderFlag = this.r.defaultRenderFlag & ~CALC_LIGHT;
         this.r.transform = new Matrix4().translate(-3, 0, 0);
         this.r.setMaterial(undefined, undefined, undefined, undefined);
         this.r.drawTriangle(
@@ -134,7 +134,6 @@ export class Game
         this.r.setMaterial(Resources.textures.barrel_diffuse, Resources.textures.barrel_normal, 10);
         this.r.drawModel(Resources.models.barrel);
 
-
         // Diablo
         xPos += 2;
         this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
@@ -143,7 +142,7 @@ export class Game
         this.r.drawModel(Resources.models.diablo);
         xPos += 2;
 
-        let r = this.time / 10.0;
+        let r = this.time / 2.0;
 
         // Cube1
         this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(0, r, r);
@@ -158,7 +157,7 @@ export class Game
         this.r.drawModel(Resources.models.cube);
 
         // Blender monkey
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(r, r, r);
+        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(0, -r, r);
         this.r.transform = this.r.transform.scale(1);
         this.r.setMaterial(Resources.textures.white, undefined, 30);
         this.r.drawModel(Resources.models.monkey);
@@ -169,7 +168,7 @@ export class Game
 
     drawSkyBox(rotation)
     {
-        this.r.renderFlag = SET_Z_9999 | EFFECT_NO_LIGHT;
+        this.r.renderFlag = SET_Z_9999 | !CALC_LIGHT;
 
         let size = new Vector3(1000, 1000, 1000);
         let pos = this.camera.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));

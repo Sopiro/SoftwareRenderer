@@ -1,6 +1,6 @@
 export class Vector2
 {
-    constructor(x, y)
+    constructor(x = 0, y = 0)
     {
         this.x = x;
         this.y = y;
@@ -12,6 +12,17 @@ export class Vector2
 
         this.x /= len;
         this.y /= len;
+    }
+
+    normalized()
+    {
+        let res = new Vector2();
+        const len = this.getLength();
+
+        res.x = this.x / len;
+        res.y = this.y / len;
+
+        return res;
     }
 
     getLength()
@@ -57,7 +68,7 @@ export class Vector2
 
 export class Vector3
 {
-    constructor(x, y, z)
+    constructor(x = 0, y = 0, z = 0)
     {
         this.x = x;
         this.y = y;
@@ -75,7 +86,14 @@ export class Vector3
 
     normalized()
     {
-        return this.div(this.getLength());
+        let res = new Vector3();
+        const len = this.getLength();
+
+        res.x = this.x / len;
+        res.y = this.y / len;
+        res.z = this.z / len;
+
+        return res;
     }
 
     getLength()

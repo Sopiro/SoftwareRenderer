@@ -13,6 +13,7 @@ export class Game
         this.time = 0;
 
         this.defaultRenderFlag = 0;
+        this.renderSkybox = true;
     }
 
     update(delta)
@@ -74,6 +75,7 @@ export class Game
         if (Input.isKeyPressed("t")) this.r.toggleRenderFlag(RENDER_TANGENT_SPACE);
         if (Input.isKeyPressed("l")) this.r.toggleRenderFlag(CALC_LIGHT);
         if (Input.isKeyPressed("m")) this.r.toggleRenderFlag(DISABLE_NORMAL_MAPPING);
+        if (Input.isKeyPressed("b")) this.renderSkybox = !this.renderSkybox;
     }
 
     render()
@@ -163,7 +165,7 @@ export class Game
         this.r.drawModel(Resources.models.monkey);
 
         // Skybox
-        this.drawSkyBox(this.time / 100.0);
+        if (this.renderSkybox) this.drawSkyBox(this.time / 100.0);
     }
 
     drawSkyBox(rotation)

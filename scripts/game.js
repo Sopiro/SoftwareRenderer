@@ -12,7 +12,6 @@ export class Game
         this.camera = camera;
         this.time = 0;
 
-        this.defaultRenderFlag = 0;
         this.renderSkybox = true;
     }
 

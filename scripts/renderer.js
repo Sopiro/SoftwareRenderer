@@ -357,7 +357,7 @@ export class Renderer extends Bitmap
                     let pixelNormal = undefined;
                     if (this.normalMap != undefined && (this.renderFlag & DISABLE_NORMAL_MAPPING) != DISABLE_NORMAL_MAPPING)
                     {
-                        let sampledNormal = this.sample(this.normalMap, uv.x, uv.y);
+                        let sampledNormal = Util.sample(this.normalMap, uv.x, uv.y);
                         sampledNormal = Util.convertColorToVectorRange2(sampledNormal).normalized();
 
                         if ((this.renderFlag & FLIP_NORMALMAP_Y) != FLIP_NORMALMAP_Y)
@@ -374,7 +374,7 @@ export class Renderer extends Bitmap
                     if (this.difuseMap == undefined)
                         color = Util.lerp3AttributeVec3(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
                     else
-                        color = this.sample(this.difuseMap, uv.x, uv.y);
+                        color = Util.sample(this.difuseMap, uv.x, uv.y);
 
                     if (calcLight)
                     {
@@ -402,19 +402,6 @@ export class Renderer extends Bitmap
                 this.renderPixel(new Vector3(x, y, z + depthMin), color);
             }
         }
-    }
-
-    sample(texture, u, v)
-    {
-        let tx = Math.floor(texture.width * u);
-        let ty = Math.floor(texture.height * (1 - v));
-
-        if (tx < 0) tx = 0;
-        if (tx >= texture.width) tx = texture.width - 1;
-        if (ty < 0) ty = 0;
-        if (ty >= texture.height) ty = texture.height - 1;
-
-        return texture.pixels[tx + ty * texture.width];
     }
 
     drawModel(model, flag)

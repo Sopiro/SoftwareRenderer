@@ -19,6 +19,7 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 |![img9](.github/7.png)|![img10](.github/8.png)|
 
 ## Implemented Features
+- Real-time rendering
 - Point drawing
 - Line drawing
 - Triangle rasterization
@@ -28,14 +29,14 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 - Depth buffering
 - Line, Polygon clipping
 - Model transform, Camera transform
-- Perspective projection
+- Perspective projection, viewport transform
 - Back face culling
 - Perspective-correct vertex attribute interpolation
 - Texture mapping
 - Skybox
 - OBJ model loading
   - Calculating face normal, tangent vectors
-- Vertex, Pixel shading
+- Vertex, Fragment(Pixel) shading
 - Phong shading
 - Normal mapping
 - Directional light

@@ -122,7 +122,7 @@ function kernel(texture, kernel, xp, yp)
             if (yy < 0) yy = 0;
             if (yy >= texture.height) yy = texture.height - 1;
 
-            const sample = Util.convertColor2VectorRange1(texture.pixels[xx + yy * texture.width]);
+            const sample = Util.convertColorToVectorRange1(texture.pixels[xx + yy * texture.width]);
 
             const kernelValue = kernel[x + y * kernelSize];
 
@@ -131,7 +131,7 @@ function kernel(texture, kernel, xp, yp)
     }
 
     res = Util.clipColorVector(res.mul(255));
-    res = Util.convertVector2ColorHex(res);
+    res = Util.convertVectorToColorHex(res);
 
     return res;
 }

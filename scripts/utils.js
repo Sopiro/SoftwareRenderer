@@ -6,9 +6,9 @@ export function convertImageDataToBitmap(imageData, width, height)
 {
     const res = new Bitmap(width, height);
 
-    for (let y = 0; y < height; y++)
+    for (let y = 0; y < height; ++y)
     {
-        for (let x = 0; x < width; x++)
+        for (let x = 0; x < width; ++x)
         {
             const r = imageData.data[(x + y * width) * 4];
             const g = imageData.data[(x + y * width) * 4 + 1];
@@ -25,9 +25,9 @@ export function convertBitmapToImageData(bitmap, scale = 1)
 {
     const res = new ImageData(bitmap.width * scale, bitmap.height * scale);
 
-    for (let y = 0; y < bitmap.height; y++)
+    for (let y = 0; y < bitmap.height; ++y)
     {
-        for (let x = 0; x < bitmap.width; x++)
+        for (let x = 0; x < bitmap.width; ++x)
         {
             const bitmapPixel = bitmap.pixels[x + y * bitmap.width]
 
@@ -46,9 +46,9 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                 continue;
             }
 
-            for (let ys = 0; ys < scale; ys++)
+            for (let ys = 0; ys < scale; ++ys)
             {
-                for (let xs = 0; xs < scale; xs++)
+                for (let xs = 0; xs < scale; ++xs)
                 {
                     const ptr = ((x * scale) + xs + ((y * scale) + ys) * res.width) * 4;
 

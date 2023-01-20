@@ -49,8 +49,10 @@ export function init(engine)
         mouseScroll.y = e.deltaY / 100;
         curr_scroll = true;
     });
-    for (let i = 0; i < maxMouseButtons; i++)
+    for (let i = 0; i < maxMouseButtons; ++i)
+    {
         mouses.push({ last_down: false, curr_down: false });
+    }
 }
 
 export function update()
@@ -66,7 +68,7 @@ export function update()
     mouseScroll.x = 0;
     mouseScroll.y = 0;
 
-    for (let i = 0; i < mouses.length; i++)
+    for (let i = 0; i < mouses.length; ++i)
         mouses[i].last_down = mouses[i].curr_down;
 
     Object.assign(last_keys, curr_keys);

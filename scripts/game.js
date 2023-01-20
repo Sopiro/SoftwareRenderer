@@ -2,7 +2,7 @@ import { Vector2, Vector3, Matrix4 } from "./math.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
 import * as Input from "./input.js";
-import { SET_Z_9999, CALC_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE, DISABLE_NORMAL_MAPPING } from "./renderer.js";
+import { RENDER_BACKGROUND, CALC_LIGHT, RENDER_FACE_NORMAL, RENDER_TANGENT_SPACE, DISABLE_NORMAL_MAPPING } from "./renderer.js";
 
 export class Game
 {
@@ -10,7 +10,7 @@ export class Game
     {
         this.r = renderer;
         this.camera = camera;
-        this.time = 0;
+        this.time = 0.0;
 
         this.renderSkybox = true;
     }
@@ -23,22 +23,22 @@ export class Game
 
         if (Input.isKeyDown("Shift")) speed *= 1.5;
 
-        let ax = 0.0;
-        let az = 0.0;
+        let mx = 0.0;
+        let mz = 0.0;
 
-        if (Input.isKeyDown("a")) ax--;
-        if (Input.isKeyDown("d")) ax++;
-        if (Input.isKeyDown("w")) az--;
-        if (Input.isKeyDown("s")) az++;
+        if (Input.isKeyDown("a")) --mx;
+        if (Input.isKeyDown("d")) ++mx;
+        if (Input.isKeyDown("w")) --mz;
+        if (Input.isKeyDown("s")) ++mz;
 
-        if (new Vector2(ax, az).getLength() > 1)
+        if (new Vector2(mx, mz).getLength() > 1)
         {
-            ax /= 1.414;
-            az /= 1.414;
+            mx /= 1.414;
+            mz /= 1.414;
         }
 
-        this.camera.pos.x += (Math.cos(this.camera.rot.y * Math.PI / 180.0) * ax + Math.sin(this.camera.rot.y * Math.PI / 180.0) * az) * speed * delta;
-        this.camera.pos.z += (-Math.sin(this.camera.rot.y * Math.PI / 180.0) * ax + Math.cos(this.camera.rot.y * Math.PI / 180.0) * az) * speed * delta;
+        this.camera.pos.x += (Math.cos(this.camera.rot.y * Math.PI / 180.0) * mx + Math.sin(this.camera.rot.y * Math.PI / 180.0) * mz) * speed * delta;
+        this.camera.pos.z += (-Math.sin(this.camera.rot.y * Math.PI / 180.0) * mx + Math.cos(this.camera.rot.y * Math.PI / 180.0) * mz) * speed * delta;
 
         if (Input.isKeyDown(" ")) this.camera.pos.y += speed * delta;
         if (Input.isKeyDown("c")) this.camera.pos.y -= speed * delta;
@@ -70,10 +70,10 @@ export class Game
         this.time += delta;
 
         // Toggling render flags
-        if (Input.isKeyPressed("n")) this.r.toggleRenderFlag(RENDER_FACE_NORMAL);
-        if (Input.isKeyPressed("t")) this.r.toggleRenderFlag(RENDER_TANGENT_SPACE);
-        if (Input.isKeyPressed("l")) this.r.toggleRenderFlag(CALC_LIGHT);
-        if (Input.isKeyPressed("m")) this.r.toggleRenderFlag(DISABLE_NORMAL_MAPPING);
+        if (Input.isKeyPressed("n")) this.r.toggleFlag(RENDER_FACE_NORMAL);
+        if (Input.isKeyPressed("t")) this.r.toggleFlag(RENDER_TANGENT_SPACE);
+        if (Input.isKeyPressed("l")) this.r.toggleFlag(CALC_LIGHT);
+        if (Input.isKeyPressed("m")) this.r.toggleFlag(DISABLE_NORMAL_MAPPING);
         if (Input.isKeyPressed("b")) this.renderSkybox = !this.renderSkybox;
     }
 
@@ -169,9 +169,9 @@ export class Game
 
     drawSkyBox(rotation)
     {
-        this.r.renderFlag = SET_Z_9999 | !CALC_LIGHT;
+        this.r.renderFlag = RENDER_BACKGROUND | !CALC_LIGHT;
 
-        let size = new Vector3(1000, 1000, 1000);
+        let size = new Vector3(1000.0, 1000.0, 1000.0);
         let pos = this.camera.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
         this.r.transform = new Matrix4().rotate(0, rotation, 0);
 
@@ -185,10 +185,10 @@ export class Game
         const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
         const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
 
-        const t00 = new Vector2(0, 1);
-        const t10 = new Vector2(1, 1);
-        const t11 = new Vector2(1, 0);
-        const t01 = new Vector2(0, 0);
+        const t00 = new Vector2(0.0, 1.0);
+        const t10 = new Vector2(1.0, 1.0);
+        const t11 = new Vector2(1.0, 0.0);
+        const t01 = new Vector2(0.0, 0.0);
 
         this.r.setMaterial(Resources.textures.skybox_front);
         this.r.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));

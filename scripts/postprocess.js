@@ -27,7 +27,7 @@ export function postProcess(bitmap, postprocessEnabled)
     {
         let result = new Uint32Array(bitmap.width * bitmap.height);
 
-        for (let i = 0; i < bitmap.pixels.length; i++)
+        for (let i = 0; i < bitmap.pixels.length; ++i)
         {
             const x = i % bitmap.width;
             const y = Math.floor(i / bitmap.width);
@@ -45,7 +45,7 @@ export function postProcess(bitmap, postprocessEnabled)
     {
         let result = new Uint32Array(bitmap.width * bitmap.height);
 
-        for (let i = 0; i < bitmap.pixels.length; i++)
+        for (let i = 0; i < bitmap.pixels.length; ++i)
         {
             const x = i % bitmap.width;
             const y = Math.floor(i / bitmap.width);
@@ -61,7 +61,7 @@ export function postProcess(bitmap, postprocessEnabled)
     // Vignette & pixel noise
     if (postprocessEnabled[2] || postprocessEnabled[3])
     {
-        for (let i = 0; i < bitmap.pixels.length; i++)
+        for (let i = 0; i < bitmap.pixels.length; ++i)
         {
             const x = i % bitmap.width;
             const y = Math.floor(i / bitmap.width);
@@ -90,7 +90,7 @@ export function postProcess(bitmap, postprocessEnabled)
     {
         let result = new Uint32Array(bitmap.width * bitmap.height);
 
-        for (let i = 0; i < bitmap.pixels.length; i++)
+        for (let i = 0; i < bitmap.pixels.length; ++i)
         {
             const x = i % bitmap.width;
             const y = Math.floor(i / bitmap.width);
@@ -110,9 +110,9 @@ function kernel(texture, kernel, xp, yp)
 
     let res = new Vector3(0, 0, 0);
 
-    for (let y = 0; y < kernelSize; y++)
+    for (let y = 0; y < kernelSize; ++y)
     {
-        for (let x = 0; x < kernelSize; x++)
+        for (let x = 0; x < kernelSize; ++x)
         {
             let xx = xp - Math.floor(kernelSize / 2) + x;
             let yy = yp - Math.floor(kernelSize / 2) + y;

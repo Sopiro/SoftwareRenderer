@@ -12,7 +12,7 @@ export class Model
         this.indices = indices;
         this.faces = [];
 
-        for (let i = 0; i < this.indices.length; i++)
+        for (let i = 0; i < this.indices.length; ++i)
         {
             let vFace = this.indices[i];
 

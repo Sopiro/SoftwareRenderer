@@ -10,7 +10,11 @@ export class Random
     constructor(seed)
     {
         this._seed = seed % 2147483647;
-        if (this._seed <= 0) this._seed += 2147483646;
+
+        if (this._seed <= 0) 
+        {
+            this._seed += 2147483646;
+        }
     }
     /**
     * Returns a pseudo-random value between 1 and 2^32 - 2.

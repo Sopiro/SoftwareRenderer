@@ -1,6 +1,6 @@
 export class Vector2
 {
-    constructor(x = 0, y = 0)
+    constructor(x = 0.0, y = 0.0)
     {
         this.x = x;
         this.y = y;
@@ -8,21 +8,20 @@ export class Vector2
 
     normalize()
     {
-        const len = this.getLength();
+        let length = this.getLength();
+        let invLength = 1.0 / length;
 
-        this.x /= len;
-        this.y /= len;
+        this.x *= invLength;
+        this.y *= invLength;
+
+        return length;
     }
 
     normalized()
     {
-        let res = new Vector2();
-        const len = this.getLength();
+        let invLength = 1.0 / this.getLength();
 
-        res.x = this.x / len;
-        res.y = this.y / len;
-
-        return res;
+        return new Vector2(this.x * invLength, this.y * invLength);
     }
 
     getLength()
@@ -68,7 +67,7 @@ export class Vector2
 
 export class Vector3
 {
-    constructor(x = 0, y = 0, z = 0)
+    constructor(x = 0.0, y = 0.0, z = 0.0)
     {
         this.x = x;
         this.y = y;
@@ -77,23 +76,21 @@ export class Vector3
 
     normalize()
     {
-        const len = this.getLength();
+        let length = this.getLength();
+        let invLength = 1.0 / length;
 
-        this.x /= len;
-        this.y /= len;
-        this.z /= len;
+        this.x *= invLength;
+        this.y *= invLength;
+        this.z *= invLength;
+
+        return length;
     }
 
     normalized()
     {
-        let res = new Vector3();
-        const len = this.getLength();
+        let invLength = 1.0 / this.getLength();
 
-        res.x = this.x / len;
-        res.y = this.y / len;
-        res.z = this.z / len;
-
-        return res;
+        return new Vector3(this.x * invLength, this.y * invLength, this.z * invLength);
     }
 
     getLength()

@@ -94,7 +94,7 @@ export class Engine
             this.resBtns[index].style.backgroundColor = "black";
         }
 
-        for (let i = 0; i < this.resBtns.length; i++)
+        for (let i = 0; i < this.resBtns.length; ++i)
         {
             const btn = this.resBtns[i];
             btn.onclick = () => reloadView.bind(this)(i);
@@ -114,7 +114,7 @@ export class Engine
             this.pspBtns[index].style.backgroundColor = this.postprocessEnabled[index] ? "black" : "white";
         }
 
-        for (let i = 0; i < this.pspBtns.length; i++)
+        for (let i = 0; i < this.pspBtns.length; ++i)
         {
             const btn = this.pspBtns[i];
             btn.onclick = () => setPostProcess.bind(this)(i);
@@ -136,7 +136,7 @@ export class Engine
                 {
                     this.tmpCvs.setAttribute("width", imageWidth + "px");
                     this.tmpCvs.setAttribute("height", imageHeight + "px");
-                    
+
                     // Loading textures
                     this.tmpGfx.drawImage(image, 0, 0, imageWidth, imageHeight);
 
@@ -158,6 +158,7 @@ export class Engine
                         Resources.textures["skybox_right"] = Util.convertImageDataToBitmap(right, size, size);
                         Resources.textures["skybox_left"] = Util.convertImageDataToBitmap(left, size, size);
                         Constants.loadedResources++;
+
                         return;
                     }
 
@@ -180,7 +181,7 @@ export class Engine
         this.game = new Game(this.renderer, this.camera);
 
         let sample = new Bitmap(64, 64);
-        for (let i = 0; i < 64 * 64; i++)
+        for (let i = 0; i < 64 * 64; ++i)
         {
             const x = i % 64;
             const y = Util.int(i / 64);
@@ -208,11 +209,15 @@ export class Engine
         const now = performance.now();
 
         while (this.times.length > 0 && this.times[0] <= now - 1000)
+        {
             this.times.shift();
+        }
 
         let delta = 1.0;
         if (this.times.length > 0)
+        {
             delta = (now - this.times[this.times.length - 1]) / 1000.0;
+        }
 
         this.times.push(now);
         this.fps = this.times.length;

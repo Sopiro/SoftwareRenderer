@@ -1,5 +1,5 @@
 import { Face } from "./face.js";
-import { Vector2, Vector3 } from "./math.js";
+import { Vec2, Vec3 } from "./math.js";
 import { Vertex } from "./vertex.js";
 
 export class Model
@@ -34,16 +34,16 @@ export class Model
 
     getPosition(pos)
     {
-        return new Vector3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
+        return new Vec3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
     }
 
     getTexCoord(tex)
     {
-        return new Vector2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
+        return new Vec2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
     }
 
     getNormal(nor)
     {
-        return new Vector3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
+        return new Vec3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
     }
 }

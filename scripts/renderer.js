@@ -1,4 +1,4 @@
-import { Vector2, Vector3, Matrix4 } from "./math.js";
+import { Vec2, Vec3, Mat4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
@@ -37,12 +37,12 @@ export class Renderer extends Bitmap
             this.ambient = 0.25;
             this.specularIntensity = 1000;
 
-            this.transform = new Matrix4();
+            this.transform = new Mat4();
             this.difuseMap = Resources.textures.sample0;
             this.normalMap = Resources.textures.default_normal;
 
             // Tangent matrix
-            this.tbn = new Matrix4();
+            this.tbn = new Mat4();
         }
 
         this.defaultRenderFlag = RENDER_CW | CALC_LIGHT;
@@ -70,7 +70,7 @@ export class Renderer extends Bitmap
         const sx = Util.int((v.pos.x / v.pos.z * Constants.FOV + Constants.WIDTH / 2.0));
         const sy = Util.int((v.pos.y / v.pos.z * Constants.FOV + Constants.HEIGHT / 2.0));
 
-        this.renderPixel(new Vector3(sx, sy, v.pos.z), v.color);
+        this.renderPixel(new Vec3(sx, sy, v.pos.z), v.color);
     }
 
     drawLine(v0, v1)
@@ -102,8 +102,8 @@ export class Renderer extends Bitmap
 
         // Transform a vertices in camera space to viewport space at one time (Avoid heavy matrix multiplication)
         // Projection transform + viewport transform
-        let p0 = new Vector2(v0.pos.x / v0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v0.pos.y / v0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        let p1 = new Vector2(v1.pos.x / v1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v1.pos.y / v1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        let p0 = new Vec2(v0.pos.x / v0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v0.pos.y / v0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        let p1 = new Vec2(v1.pos.x / v1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v1.pos.y / v1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
 
         // Render left to right
         if (p1.x < p0.x)
@@ -143,7 +143,7 @@ export class Renderer extends Bitmap
 
                 let c = Util.lerp2AttributeVec3(v0.color, v1.color, (1 - per), per, v0.pos.z, v1.pos.z, z);
 
-                this.renderPixel(new Vector3(Util.int(x), Util.int(y), z), c);
+                this.renderPixel(new Vec3(Util.int(x), Util.int(y), z), c);
             }
         }
         else
@@ -177,7 +177,7 @@ export class Renderer extends Bitmap
                 let z = 1 / ((1 - per) / v0.pos.z + per / v1.pos.z);
 
                 let c = Util.lerp2AttributeVec3(v0.color, v1.color, (1 - per), per, v0.pos.z, v1.pos.z, z);
-                this.renderPixel(new Vector3(Util.int(x), Util.int(y), z), c);
+                this.renderPixel(new Vec3(Util.int(x), Util.int(y), z), c);
             }
         }
     }
@@ -316,9 +316,9 @@ export class Renderer extends Bitmap
 
         // Transform a vertices in camera space to viewport space at one time (Avoid heavy matrix multiplication)
         // Projection transform + viewport transform
-        const p0 = new Vector2(vp0.pos.x / vp0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp0.pos.y / vp0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        const p1 = new Vector2(vp1.pos.x / vp1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp1.pos.y / vp1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        const p2 = new Vector2(vp2.pos.x / vp2.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp2.pos.y / vp2.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        const p0 = new Vec2(vp0.pos.x / vp0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp0.pos.y / vp0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        const p1 = new Vec2(vp1.pos.x / vp1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp1.pos.y / vp1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        const p2 = new Vec2(vp2.pos.x / vp2.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp2.pos.y / vp2.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
 
         let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
         let maxX = Math.ceil(Math.max(p0.x, p1.x, p2.x));
@@ -330,10 +330,10 @@ export class Renderer extends Bitmap
         if (maxX > Constants.WIDTH) maxX = Constants.WIDTH;
         if (maxY > Constants.HEIGHT) maxY = Constants.HEIGHT;
 
-        const v10 = new Vector2(p1.x - p0.x, p1.y - p0.y);
-        const v21 = new Vector2(p2.x - p1.x, p2.y - p1.y);
-        const v02 = new Vector2(p0.x - p2.x, p0.y - p2.y);
-        const v20 = new Vector2(p2.x - p0.x, p2.y - p0.y);
+        const v10 = new Vec2(p1.x - p0.x, p1.y - p0.y);
+        const v21 = new Vec2(p2.x - p1.x, p2.y - p1.y);
+        const v02 = new Vec2(p0.x - p2.x, p0.y - p2.y);
+        const v20 = new Vec2(p2.x - p0.x, p2.y - p0.y);
 
         const area = v10.cross(v20);
 
@@ -350,7 +350,7 @@ export class Renderer extends Bitmap
         {
             for (let x = minX; x < maxX; ++x)
             {
-                let p = new Vector2(x, y);
+                let p = new Vec2(x, y);
 
                 let w0 = v21.cross(p.sub(p1));
                 let w1 = v02.cross(p.sub(p2));
@@ -427,7 +427,7 @@ export class Renderer extends Bitmap
                 }
                 // Fragment(Pixel) Shader End
 
-                this.renderPixel(new Vector3(x, y, z + depthMin), color);
+                this.renderPixel(new Vec3(x, y, z + depthMin), color);
             }
         }
     }
@@ -454,10 +454,10 @@ export class Renderer extends Bitmap
     // Local space -> World space
     modelTransform(v)
     {
-        const newPos = this.transform.mulVector(v.pos, 1);
-        const newNor = v.normal != undefined ? this.transform.mulVector(v.normal, 0).normalized() : undefined;
-        const newTan = v.tangent != undefined ? this.transform.mulVector(v.tangent, 0).normalized() : undefined;
-        const newBiTan = v.biTangent != undefined ? this.transform.mulVector(v.biTangent, 0).normalized() : undefined;
+        const newPos = this.transform.mulVector(v.pos, 1.0);
+        const newNor = v.normal != undefined ? this.transform.mulVector(v.normal, 0.0).normalized() : undefined;
+        const newTan = v.tangent != undefined ? this.transform.mulVector(v.tangent, 0.0).normalized() : undefined;
+        const newBiTan = v.biTangent != undefined ? this.transform.mulVector(v.biTangent, 0.0).normalized() : undefined;
 
         return new Vertex(newPos, v.color, v.texCoord, newNor, newTan, newBiTan);
     }
@@ -465,12 +465,12 @@ export class Renderer extends Bitmap
     // World space -> Cemera space(view space)
     viewTransform(v)
     {
-        const newPos = this.camera.cameraTransform.mulVector(new Vector3(v.pos.x, v.pos.y, v.pos.z));
-        newPos.z *= -1;
+        const newPos = this.camera.cameraTransform.mulVector(new Vec3(v.pos.x, v.pos.y, v.pos.z));
+        newPos.z *= -1.0;
 
-        const newNor = v.normal != undefined ? this.camera.cameraTransform.mulVector(v.normal, 0).normalized() : undefined;
-        const newTan = v.tangent != undefined ? this.camera.cameraTransform.mulVector(v.tangent, 0).normalized() : undefined;
-        const newBiTan = v.biTangent != undefined ? this.camera.cameraTransform.mulVector(v.biTangent, 0).normalized() : undefined;
+        const newNor = v.normal != undefined ? this.camera.cameraTransform.mulVector(v.normal, 0.0).normalized() : undefined;
+        const newTan = v.tangent != undefined ? this.camera.cameraTransform.mulVector(v.tangent, 0.0).normalized() : undefined;
+        const newBiTan = v.biTangent != undefined ? this.camera.cameraTransform.mulVector(v.biTangent, 0.0).normalized() : undefined;
 
         return new Vertex(newPos, v.color, v.texCoord, newNor, newTan, newBiTan);
     }

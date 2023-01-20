@@ -1,4 +1,4 @@
-import { Vector2, Vector3 } from "./math.js";
+import { Vec2, Vec3 } from "./math.js";
 
 export class Vertex
 {
@@ -8,11 +8,11 @@ export class Vertex
 
         if (typeof color == "number")
         {
-            this.color = new Vector3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            this.color = new Vec3((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
         }
         else if (color == undefined)
         {
-            this.color = new Vector3(255, 0, 255);
+            this.color = new Vec3(255, 0, 255);
         }
         else
         {
@@ -21,7 +21,7 @@ export class Vertex
 
         if (texCoord == undefined)
         {
-            this.texCoord = new Vector2(0.0, 0.0);
+            this.texCoord = new Vec2(0.0, 0.0);
         }
         else
         {

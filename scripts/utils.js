@@ -1,4 +1,4 @@
-import { Vector2, Vector3, Matrix4 } from "./math.js";
+import { Vec2, Vec3, Mat4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
 import { Constants } from "./constants.js";
 
@@ -96,7 +96,7 @@ export function lerpVector3(a, b, c, w0, w1, w2)
     const wb = b.mul(w1);
     const wc = c.mul(w2);
 
-    return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
+    return new Vec3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
 export function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
@@ -104,7 +104,7 @@ export function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
     const wa = a.mul(w0 / z0 * z);
     const wb = b.mul(w1 / z1 * z);
 
-    return new Vector3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
+    return new Vec3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
 }
 
 export function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
@@ -113,7 +113,7 @@ export function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
     const wb = b.mul(w1 / z1 * z);
     const wc = c.mul(w2 / z2 * z);
 
-    return new Vector2(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y);
+    return new Vec2(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y);
 }
 
 export function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
@@ -122,7 +122,7 @@ export function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
     const wb = b.mul(w1 / z1 * z);
     const wc = c.mul(w2 / z2 * z);
 
-    return new Vector3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
+    return new Vec3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
 export function convertColorToVectorRange1(hex)
@@ -131,7 +131,7 @@ export function convertColorToVectorRange1(hex)
     const g = ((hex >> 8) & 0xff) / 255.0;
     const b = (hex & 0xff) / 255.0;
 
-    return new Vector3(r, g, b);
+    return new Vec3(r, g, b);
 }
 
 export function convertColorToVectorRange2(hex)
@@ -140,7 +140,7 @@ export function convertColorToVectorRange2(hex)
     const g = ((hex >> 8) & 0xff) / 127.5 - 1.0;
     const b = (hex & 0xff) / 127.5 - 1.0;
 
-    return new Vector3(r, g, b);
+    return new Vec3(r, g, b);
 }
 
 export function convertColorToVectorRange255(hex)
@@ -149,7 +149,7 @@ export function convertColorToVectorRange255(hex)
     const g = ((hex >> 8) & 0xff);
     const b = (hex & 0xff);
 
-    return new Vector3(r, g, b);
+    return new Vec3(r, g, b);
 }
 
 export function convertVectorToColorHex(vec3)
@@ -163,7 +163,7 @@ export function clipColorVector(vec3)
     const ng = clamp(vec3.y, 0, 255);
     const nb = clamp(vec3.z, 0, 255);
 
-    return new Vector3(nr, ng, nb);
+    return new Vec3(nr, ng, nb);
 }
 
 export function mulColor(hex, per)
@@ -186,13 +186,13 @@ export function addColor(hex, val)
 
 export function createTransformMatrix(pos, rot, scale)
 {
-    return new Matrix4().translate(pos.x, pos.y, pos.z).rotate(rot.x, rot.y, rot.z).scale(scale.x, scale.y, scale.z);
+    return new Mat4().translate(pos.x, pos.y, pos.z).rotate(rot.x, rot.y, rot.z).scale(scale.x, scale.y, scale.z);
 }
 
 export function sample(texture, u, v)
 {
     let tx = Math.floor(texture.width * u);
-    let ty = Math.floor(texture.height * (1 - v));
+    let ty = Math.floor(texture.height * (1.0 - v));
 
     if (tx < 0) tx = 0;
     if (tx >= texture.width) tx = texture.width - 1;

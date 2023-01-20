@@ -1,4 +1,4 @@
-import { Vector2, Vector3, Matrix4 } from "./math.js";
+import { Vec2, Vec3, Mat4 } from "./math.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
 import * as Input from "./input.js";
@@ -31,7 +31,7 @@ export class Game
         if (Input.isKeyDown("w")) --mz;
         if (Input.isKeyDown("s")) ++mz;
 
-        if (new Vector2(mx, mz).getLength() > 1)
+        if (new Vec2(mx, mz).getLength() > 1)
         {
             mx /= 1.414;
             mz /= 1.414;
@@ -50,7 +50,7 @@ export class Game
         }
 
         const radRot = this.camera.rot.mul(-Math.PI / 180.0);
-        this.camera.cameraTransform = new Matrix4().rotate(radRot.x, radRot.y, radRot.z);
+        this.camera.cameraTransform = new Mat4().rotate(radRot.x, radRot.y, radRot.z);
         this.camera.cameraTransform = this.camera.cameraTransform.translate(-this.camera.pos.x, -this.camera.pos.y, -this.camera.pos.z);
 
         // Control directional light
@@ -63,7 +63,7 @@ export class Game
         if (Input.isKeyDown("i")) this.r.sun.intensity *= 1.1;
         if (Input.isKeyDown("o")) this.r.sun.intensity *= 1 / 1.1;
 
-        let matrix = new Matrix4().rotate(this.r.sun.rotation.x, this.r.sun.rotation.y, this.r.sun.rotation.z);
+        let matrix = new Mat4().rotate(this.r.sun.rotation.x, this.r.sun.rotation.y, this.r.sun.rotation.z);
         let sunDir = matrix.mulVector(this.r.sun.posRelativeToZero, 0).normalized().mul(-1);
         this.r.sun.dirVS = this.camera.cameraTransform.mulVector(sunDir, 0);
 
@@ -80,115 +80,118 @@ export class Game
     render()
     {
         // Line
-        this.r.transform = new Matrix4();
-        this.r.drawLine(new Vertex(new Vector3(-6, 0, -5), 0xff0000), new Vertex(new Vector3(-5, 1, -7), 0x00ff00));
+        this.r.transform = new Mat4();
+        this.r.drawLine(new Vertex(new Vec3(-6, 0, -5), 0xff0000), new Vertex(new Vec3(-5, 1, -7), 0x00ff00));
 
-        // Trianglesa
+        // Triangles
         this.r.renderFlag = this.r.defaultRenderFlag & ~CALC_LIGHT;
-        this.r.transform = new Matrix4().translate(-3, 0, 0);
+        this.r.transform = new Mat4().translate(-3.0, 0.0, 0.0);
         this.r.setMaterial(undefined, undefined, undefined, undefined);
         this.r.drawTriangle(
-            new Vertex(new Vector3(-1, 0, -5), 0xff0000),
-            new Vertex(new Vector3(0, 1, -5), 0x00ff00),
-            new Vertex(new Vector3(1, 0, -5), 0x0000ff)
+            new Vertex(new Vec3(-1.0, 0.0, -5.0), 0xff0000),
+            new Vertex(new Vec3(0.0, 1.0, -5.0), 0x00ff00),
+            new Vertex(new Vec3(1.0, 0.0, -5.0), 0x0000ff)
         );
         this.r.renderFlag = this.r.defaultRenderFlag;
 
-        let xPos = 0;
-        let zPos = -5;
-        let index = 0;
-        let gap = 4;
+        let xPos = 0.0;
+        let zPos = -5.0;
+        let index = 0.0;
+        let gap = 4.0;
 
         // Flat sphere
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.white, undefined, 100);
+        this.r.setMaterial(Resources.textures.white, undefined, 100.0);
         this.r.drawModel(Resources.models.flat_sphere);
 
         // Smooth sphere
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.white, undefined, 100);
+        this.r.setMaterial(Resources.textures.white, undefined, 100.0);
         this.r.drawModel(Resources.models.smooth_sphere);
 
         // Brick1
-        this.r.transform = new Matrix4().translate(xPos + (index * gap), -4, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index * gap), -4.0, zPos);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.brick, Resources.textures.brick_normal, 10);
+        this.r.setMaterial(Resources.textures.brick, Resources.textures.brick_normal, 10.0);
         this.r.drawModel(Resources.models.cube);
 
         // Brick2
-        this.r.transform = new Matrix4().translate(xPos + (index * gap), 0, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index * gap), 0.0, zPos);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.stone2, Resources.textures.stone2_normal, 10);
+        this.r.setMaterial(Resources.textures.stone2, Resources.textures.stone2_normal, 10.0);
         this.r.drawModel(Resources.models.cube);
 
         // Brick3
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 4, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 4.0, zPos);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.brickwall, Resources.textures.brickwall_normal, 10);
+        this.r.setMaterial(Resources.textures.brickwall, Resources.textures.brickwall_normal, 10.0);
         this.r.drawModel(Resources.models.cube);
 
         // Barrel
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.r.transform = this.r.transform.scale(0.3);
-        this.r.setMaterial(Resources.textures.barrel_diffuse, Resources.textures.barrel_normal, 10);
+        this.r.setMaterial(Resources.textures.barrel_diffuse, Resources.textures.barrel_normal, 10.0);
         this.r.drawModel(Resources.models.barrel);
 
         // Diablo
-        xPos += 2;
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos);
-        this.r.transform = this.r.transform.scale(4);
-        this.r.setMaterial(Resources.textures.diablo_diffuse, Resources.textures.diablo_normal, 10);
+        xPos += 2.0;
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
+        this.r.transform = this.r.transform.scale(4.0);
+        this.r.setMaterial(Resources.textures.diablo_diffuse, Resources.textures.diablo_normal, 10.0);
         this.r.drawModel(Resources.models.diablo);
-        xPos += 2;
+        xPos += 2.0;
 
         let r = this.time / 2.0;
 
         // Cube1
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(0, r, r);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(0.0, r, r);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.pepe, undefined, 30);
+        this.r.setMaterial(Resources.textures.pepe, undefined, 30.0);
         this.r.drawModel(Resources.models.cube);
 
         // Cube2
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(r, r, 0);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(r, r, 0.0);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.dulri, undefined, 30);
+        this.r.setMaterial(Resources.textures.dulri, undefined, 30.0);
         this.r.drawModel(Resources.models.cube);
 
         // Blender monkey
-        this.r.transform = new Matrix4().translate(xPos + (index++ * gap), 0, zPos).rotate(0, -r, r);
+        this.r.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(0.0, -r, r);
         this.r.transform = this.r.transform.scale(1);
-        this.r.setMaterial(Resources.textures.white, undefined, 30);
+        this.r.setMaterial(Resources.textures.white, undefined, 30.0);
         this.r.drawModel(Resources.models.monkey);
 
         // Skybox
-        if (this.renderSkybox) this.drawSkyBox(this.time / 100.0);
+        if (this.renderSkybox)
+        {
+            this.drawSkyBox(this.time / 100.0);
+        }
     }
 
     drawSkyBox(rotation)
     {
         this.r.renderFlag = RENDER_BACKGROUND | !CALC_LIGHT;
 
-        let size = new Vector3(1000.0, 1000.0, 1000.0);
-        let pos = this.camera.pos.sub(new Vector3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
-        this.r.transform = new Matrix4().rotate(0, rotation, 0);
+        let size = new Vec3(1000.0, 1000.0, 1000.0);
+        let pos = this.camera.pos.sub(new Vec3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));
+        this.r.transform = new Mat4().rotate(0.0, rotation, 0.0);
 
-        const p000 = new Vector3(pos.x, pos.y, pos.z);
-        const p100 = new Vector3(pos.x + size.x, pos.y, pos.z);
-        const p110 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z);
-        const p010 = new Vector3(pos.x, pos.y + size.y, pos.z);
+        const p000 = new Vec3(pos.x, pos.y, pos.z);
+        const p100 = new Vec3(pos.x + size.x, pos.y, pos.z);
+        const p110 = new Vec3(pos.x + size.x, pos.y + size.y, pos.z);
+        const p010 = new Vec3(pos.x, pos.y + size.y, pos.z);
 
-        const p001 = new Vector3(pos.x, pos.y, pos.z - size.z);
-        const p101 = new Vector3(pos.x + size.x, pos.y, pos.z - size.z);
-        const p111 = new Vector3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
-        const p011 = new Vector3(pos.x, pos.y + size.y, pos.z - size.z);
+        const p001 = new Vec3(pos.x, pos.y, pos.z - size.z);
+        const p101 = new Vec3(pos.x + size.x, pos.y, pos.z - size.z);
+        const p111 = new Vec3(pos.x + size.x, pos.y + size.y, pos.z - size.z);
+        const p011 = new Vec3(pos.x, pos.y + size.y, pos.z - size.z);
 
-        const t00 = new Vector2(0.0, 1.0);
-        const t10 = new Vector2(1.0, 1.0);
-        const t11 = new Vector2(1.0, 0.0);
-        const t01 = new Vector2(0.0, 0.0);
+        const t00 = new Vec2(0.0, 1.0);
+        const t10 = new Vec2(1.0, 1.0);
+        const t11 = new Vec2(1.0, 0.0);
+        const t01 = new Vec2(0.0, 0.0);
 
         this.r.setMaterial(Resources.textures.skybox_front);
         this.r.drawTriangle(new Vertex(p001, 0xffffff, t01), new Vertex(p011, 0xffffff, t00), new Vertex(p111, 0xffffff, t10));

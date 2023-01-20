@@ -1,4 +1,4 @@
-import { Vector3 } from "./math.js";
+import { Vec3 } from "./math.js";
 
 export class Face
 {
@@ -30,7 +30,7 @@ export class Face
 
         const f = 1.0 / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
-        let tangent = new Vector3(
+        let tangent = new Vec3(
             f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x),
             f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
             f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)

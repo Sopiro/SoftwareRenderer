@@ -1,5 +1,5 @@
 
-import { Vector3 } from "./math.js";
+import { Vec3 } from "./math.js";
 import * as Util from "./utils.js";
 
 const gaussianBlurKernel = [
@@ -108,7 +108,7 @@ function kernel(texture, kernel, xp, yp)
 {
     const kernelSize = Math.sqrt(kernel.length);
 
-    let res = new Vector3(0, 0, 0);
+    let res = new Vec3(0, 0, 0);
 
     for (let y = 0; y < kernelSize; ++y)
     {

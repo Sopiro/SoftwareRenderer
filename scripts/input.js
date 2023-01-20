@@ -1,5 +1,5 @@
 import { Constants } from "./constants.js";
-import { Vector2 } from "./math.js";
+import { Vec2 } from "./math.js";
 
 const last_keys = {};
 const curr_keys = {};
@@ -9,10 +9,10 @@ const maxMouseButtons = 5;
 let last_scroll = false;
 let curr_scroll = false;
 
-export const mousePosition = new Vector2(0, 0);
-export const mouseLastPosition = new Vector2(0, 0);
-export const mouseScroll = new Vector2(0, 0);
-export const mouseAcceleration = new Vector2(0, 0);
+export const mousePosition = new Vec2(0, 0);
+export const mouseLastPosition = new Vec2(0, 0);
+export const mouseScroll = new Vec2(0, 0);
+export const mouseAcceleration = new Vec2(0, 0);
 
 export function init(engine)
 {

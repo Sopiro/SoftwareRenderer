@@ -1,4 +1,4 @@
-export class Vector2
+export class Vec2
 {
     constructor(x = 0.0, y = 0.0)
     {
@@ -21,7 +21,7 @@ export class Vector2
     {
         let invLength = 1.0 / this.getLength();
 
-        return new Vector2(this.x * invLength, this.y * invLength);
+        return new Vec2(this.x * invLength, this.y * invLength);
     }
 
     getLength()
@@ -41,22 +41,22 @@ export class Vector2
 
     add(v)
     {
-        return new Vector2(this.x + v.x, this.y + v.y);
+        return new Vec2(this.x + v.x, this.y + v.y);
     }
 
     sub(v)
     {
-        return new Vector2(this.x - v.x, this.y - v.y);
+        return new Vec2(this.x - v.x, this.y - v.y);
     }
 
     div(v)
     {
-        return new Vector2(this.x / v, this.y / v);
+        return new Vec2(this.x / v, this.y / v);
     }
 
     mul(v)
     {
-        return new Vector2(this.x * v, this.y * v);
+        return new Vec2(this.x * v, this.y * v);
     }
 
     equals(v)
@@ -65,7 +65,7 @@ export class Vector2
     }
 }
 
-export class Vector3
+export class Vec3
 {
     constructor(x = 0.0, y = 0.0, z = 0.0)
     {
@@ -90,7 +90,7 @@ export class Vector3
     {
         let invLength = 1.0 / this.getLength();
 
-        return new Vector3(this.x * invLength, this.y * invLength, this.z * invLength);
+        return new Vec3(this.x * invLength, this.y * invLength, this.z * invLength);
     }
 
     getLength()
@@ -105,37 +105,37 @@ export class Vector3
 
     cross(v)
     {
-        return new Vector3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+        return new Vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
     }
 
     add(v)
     {
-        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
+        return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
     }
 
     sub(v)
     {
-        return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z);
+        return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
     }
 
     div(v)
     {
-        return new Vector3(this.x / v, this.y / v, this.z / v);
+        return new Vec3(this.x / v, this.y / v, this.z / v);
     }
 
     divXYZ(x, y, z)
     {
-        return new Vector3(this.x / x, this.y / y, this.z / z);
+        return new Vec3(this.x / x, this.y / y, this.z / z);
     }
 
     mul(v)
     {
-        return new Vector3(this.x * v, this.y * v, this.z * v);
+        return new Vec3(this.x * v, this.y * v, this.z * v);
     }
 
     mulXYZ(x, y, z)
     {
-        return new Vector3(this.x * x, this.y * y, this.z * z);
+        return new Vec3(this.x * x, this.y * y, this.z * z);
     }
 
     equals(v)
@@ -144,7 +144,7 @@ export class Vector3
     }
 }
 
-export class Matrix4
+export class Mat4
 {
     constructor()
     {
@@ -156,7 +156,7 @@ export class Matrix4
 
     fromAxis(vx, vy, vz)
     {
-        let res = new Matrix4();
+        let res = new Mat4();
 
         res.m00 = vx.x; res.m01 = vy.x; res.m02 = vz.x;
         res.m10 = vx.y; res.m11 = vy.y; res.m12 = vz.y;
@@ -167,7 +167,7 @@ export class Matrix4
 
     mulMatrix(right)
     {
-        let res = new Matrix4();
+        let res = new Mat4();
 
         res.m00 = this.m00 * right.m00 + this.m01 * right.m10 + this.m02 * right.m20 + this.m03 * right.m30;
         res.m01 = this.m00 * right.m01 + this.m01 * right.m11 + this.m02 * right.m21 + this.m03 * right.m31;
@@ -194,7 +194,7 @@ export class Matrix4
 
     mulVector(right, w)
     {
-        let res = new Vector3(0, 0, 0);
+        let res = new Vec3(0, 0, 0);
 
         if (w == undefined) w = 1;
 
@@ -213,7 +213,7 @@ export class Matrix4
             z = x;
         }
 
-        let scale = new Matrix4();
+        let scale = new Mat4();
         scale.m00 = x;
         scale.m11 = y;
         scale.m22 = z;
@@ -230,7 +230,7 @@ export class Matrix4
         const sinZ = Math.sin(z);
         const cosZ = Math.cos(z);
 
-        let res = new Matrix4();
+        let res = new Mat4();
 
         res.m00 = cosY * cosZ; res.m01 = -cosY * sinZ; res.m02 = sinY; res.m03 = 0;
         res.m10 = sinX * sinY * cosZ + cosX * sinZ; res.m11 = -sinX * sinY * sinZ + cosX * cosZ; res.m12 = -sinX * cosY; res.m13 = 0;
@@ -242,7 +242,7 @@ export class Matrix4
 
     translate(x, y, z)
     {
-        let res = new Matrix4();
+        let res = new Mat4();
 
         res.m03 = x;
         res.m13 = y;

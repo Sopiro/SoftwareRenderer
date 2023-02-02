@@ -267,13 +267,20 @@ export class Engine
 
         if (true)
         {
-            // Resize the imagedata via off-screen rendering
-            this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
-            this.gfx.save();
-            this.gfx.imageSmoothingEnabled = false;
-            this.gfx.scale(Constants.SCALE, Constants.SCALE);
-            this.gfx.drawImage(this.tmpCvs, 0, 0);
-            this.gfx.restore();
+            if (Constants.SCALE > 1)
+            {
+                // Resize the imagedata using off-screen rendering
+                this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
+                this.gfx.save();
+                this.gfx.imageSmoothingEnabled = false;
+                this.gfx.scale(Constants.SCALE, Constants.SCALE);
+                this.gfx.drawImage(this.tmpCvs, 0, 0);
+                this.gfx.restore();
+            }
+            else
+            {
+                this.gfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
+            }
         } else
         {
             this.gfx.putImageData(Util.convertBitmapToImageData(this.renderer, Constants.SCALE), 0, 0)

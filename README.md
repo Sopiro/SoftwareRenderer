@@ -6,7 +6,7 @@ This program is written in vanilla javascript. No WebGL, No external library use
 Video: https://youtu.be/EGpyw_Su2r0  
 Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
-## Examples 
+## Example
 
 |Post Processing Enabled|Normal Mapping|
 |--|--|
@@ -20,25 +20,23 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Implemented Features
 - Real-time rendering
-- Point drawing
-- Line drawing
+- Point and line rendering
 - Triangle rasterization
   - A Parallel Algorithm for Polygon Rasterization. Juan Pineda. Siggraph 1988.
   - [Explained](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage)
 - Indexed vertex rendering
 - Depth buffering
-- Line, Polygon clipping
-- Model transform, Camera transform
+- Clipping for z-near plane
 - Perspective projection, viewport transform
 - Back face culling
 - Perspective-correct vertex attribute interpolation
 - Texture mapping
 - Skybox
 - OBJ model loading
-  - Calculating face normal, tangent vectors
+  - Calculating face normal and tangent vectors
 - Vertex, Fragment(Pixel) shading
-- Phong shading
+- Phong shading model
+  - Directional light
 - Normal mapping
-- Directional light
 - Resolution changer
 - Post-processing stage

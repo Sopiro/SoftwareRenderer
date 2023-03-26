@@ -29,7 +29,7 @@ export function init(engine)
     }, false);
     window.addEventListener("keydown", (e) =>
     {
-        if (e.key == "Escape") Constants.pause = !Constants.pause;
+        if (e.key == "Escape") Constants.PAUSE = !Constants.PAUSE;
 
         curr_keys[e.key] = true;
     });

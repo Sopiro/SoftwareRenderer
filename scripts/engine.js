@@ -75,23 +75,30 @@ export class Engine
 
         function reloadView(index)
         {
-            if (index == Constants.SCALES[index]) return;
+            if (index == Constants.SCALE_INDEX)
+            {
+                return;
+            }
+            Constants.SCALE_INDEX = index;
 
-            const newWidth = Constants.WIDTH * Constants.SCALE / Constants.SCALES[index];
-            const newHeight = Constants.HEIGHT * Constants.SCALE / Constants.SCALES[index];
+            const newWidth = Constants.WIDTH * Constants.SCALE / Constants.SCALES[Constants.SCALE_INDEX];
+            const newHeight = Constants.HEIGHT * Constants.SCALE / Constants.SCALES[Constants.SCALE_INDEX];
             this.renderer = new Renderer(newWidth, newHeight, this.camera);
-            this.game.r = this.renderer;
+            this.game.renderer = this.renderer;
 
             Constants.WIDTH = newWidth;
             Constants.HEIGHT = newHeight;
-            Constants.SCALE = Constants.SCALES[index];
+            Constants.SCALE = Constants.SCALES[Constants.SCALE_INDEX];
             Constants.FOV = Constants.HEIGHT;
 
             this.tmpCvs.width = Constants.WIDTH;
             this.tmpCvs.height = Constants.HEIGHT;
 
-            for (const btn of this.resBtns) btn.style.backgroundColor = "white";
-            this.resBtns[index].style.backgroundColor = "black";
+            for (const btn of this.resBtns) 
+            {
+                btn.style.backgroundColor = "white";
+            }
+            this.resBtns[Constants.SCALE_INDEX].style.backgroundColor = "black";
         }
 
         for (let i = 0; i < this.resBtns.length; ++i)
@@ -108,7 +115,7 @@ export class Engine
         this.pspBtns.push(document.getElementById("psp4"));
         this.pspBtns.push(document.getElementById("psp5"));
 
-        function setPostProcess(index)
+        function setPostProcessEnabled(index)
         {
             this.postprocessEnabled[index] = !this.postprocessEnabled[index];
             this.pspBtns[index].style.backgroundColor = this.postprocessEnabled[index] ? "black" : "white";
@@ -117,8 +124,12 @@ export class Engine
         for (let i = 0; i < this.pspBtns.length; ++i)
         {
             const btn = this.pspBtns[i];
-            btn.onclick = () => setPostProcess.bind(this)(i);
-            if (this.postprocessEnabled[i]) btn.style.backgroundColor = "black";
+            btn.onclick = () => setPostProcessEnabled.bind(this)(i);
+
+            if (this.postprocessEnabled[i]) 
+            {
+                btn.style.backgroundColor = "black";
+            }
         }
 
         for (const key in Resources.textures)
@@ -157,7 +168,7 @@ export class Engine
                         Resources.textures["skybox_back"] = Util.convertImageDataToBitmap(back, size, size);
                         Resources.textures["skybox_right"] = Util.convertImageDataToBitmap(right, size, size);
                         Resources.textures["skybox_left"] = Util.convertImageDataToBitmap(left, size, size);
-                        Constants.loadedResources++;
+                        Constants.LOADED_RESOURCES++;
 
                         return;
                     }
@@ -166,7 +177,7 @@ export class Engine
                     image = Util.convertImageDataToBitmap(image, imageWidth, imageHeight);
 
                     Resources.textures[key] = image;
-                    Constants.loadedResources++;
+                    Constants.LOADED_RESOURCES++;
                 }
             }
         }
@@ -223,7 +234,7 @@ export class Engine
         this.fps = this.times.length;
         this.frameCounterElement.innerHTML = this.fps + "fps";
 
-        if (!this.started && Constants.loadedResources == Constants.resourceReady)
+        if (!this.started && Constants.LOADED_RESOURCES == Constants.RESOURCE_READY)
         {
             this.started = true;
             this.cvs.setAttribute("width", Constants.WIDTH * Constants.SCALE + "px");
@@ -236,16 +247,16 @@ export class Engine
         if (!this.started)
         {
             this.gfx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-            this.gfx.fillText("Loading..." + Util.int(Constants.loadedResources / Constants.resourceReady * 100) + "%", 10, 60);
+            this.gfx.fillText("Loading..." + Util.int(Constants.LOADED_RESOURCES / Constants.RESOURCE_READY * 100) + "%", 10, 60);
         }
 
-        if (this.started && !Constants.pause)
+        if (this.started && !Constants.PAUSE)
         {
             this.update(delta);
             this.render();
             this.time += delta;
         }
-        else if (Constants.pause)
+        else if (Constants.PAUSE)
         {
             this.gfx.fillText("PAUSE", 4, 40);
         }

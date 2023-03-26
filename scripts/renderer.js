@@ -253,7 +253,7 @@ export class Renderer extends Bitmap
         }
         else if (v0.pos.z > this.zClipNear && v1.pos.z > this.zClipNear && v2.pos.z > this.zClipNear)
         {
-            this.drawTriangleVS(v0, v1, v2);
+            this.drawTriangleViewSpace(v0, v1, v2);
             return;
         }
 
@@ -298,17 +298,17 @@ export class Renderer extends Bitmap
         switch (drawVertices.length)
         {
             case 3:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2])
+                this.drawTriangleViewSpace(drawVertices[0], drawVertices[1], drawVertices[2])
                 break;
             case 4:
-                this.drawTriangleVS(drawVertices[0], drawVertices[1], drawVertices[2])
-                this.drawTriangleVS(drawVertices[0], drawVertices[2], drawVertices[3])
+                this.drawTriangleViewSpace(drawVertices[0], drawVertices[1], drawVertices[2])
+                this.drawTriangleViewSpace(drawVertices[0], drawVertices[2], drawVertices[3])
                 break;
         }
     }
 
     // Expect the input vertices to be in the camera space(view space)
-    drawTriangleVS(vp0, vp1, vp2)
+    drawTriangleViewSpace(vp0, vp1, vp2)
     {
         const z0 = vp0.pos.z;
         const z1 = vp1.pos.z;

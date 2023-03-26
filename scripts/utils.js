@@ -42,7 +42,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                 res.data[ptr] = r;
                 res.data[ptr + 1] = g;
                 res.data[ptr + 2] = b;
-                res.data[ptr + 3] = Constants.globalAlpha;
+                res.data[ptr + 3] = Constants.GLOBAL_ALPHA;
                 continue;
             }
 
@@ -55,7 +55,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                     res.data[ptr] = r;
                     res.data[ptr + 1] = g;
                     res.data[ptr + 2] = b;
-                    res.data[ptr + 3] = Constants.globalAlpha;
+                    res.data[ptr + 3] = Constants.GLOBAL_ALPHA;
                 }
             }
         }

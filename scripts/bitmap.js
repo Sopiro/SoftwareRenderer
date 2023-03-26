@@ -7,7 +7,7 @@ export class Bitmap
         this.pixels = new Uint32Array(width * height);
     }
 
-    // Render other bitmap image onto this bitmap with offset
+    // Render bitmap image onto this bitmap with offset
     render(bitmap, ox, oy)
     {
         for (let y = 0; y < bitmap.height; ++y)

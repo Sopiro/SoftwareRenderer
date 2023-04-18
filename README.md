@@ -8,11 +8,11 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Example
 
-|Post Processing Enabled|Normal Mapping|
+|Post processing|Normal mapping|
 |--|--|
 |![img1](.github/c5ba1f7.gif)|![img2](.github/0b3e605.gif)|
 
-|Line and triangle| Flat and smooth shaded sphere|
+|Line and triangle| Flat and smooth shaded spheres|
 |--|--|
 |![img3](.github/1.png) |![img4](.github/2.png)|
 

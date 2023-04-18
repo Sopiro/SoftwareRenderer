@@ -12,11 +12,21 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 |--|--|
 |![img1](.github/c5ba1f7.gif)|![img2](.github/0b3e605.gif)|
 
-|![img3](.github/1.png)|![img4](.github/2.png)|
+|Line and triangle| Flat and smooth shaded sphere|
+|--|--|
+|![img3](.github/1.png) |![img4](.github/2.png)|
+
+|Normal mapped cube 1| Normal mapped cube 2|
 |--|--|
 |![img5](.github/3.png)|![img6](.github/4.png)|
-|![img7](.github/5.png)|![img8](.github/6.png)|
-|![img9](.github/7.png)|![img10](.github/8.png)|
+
+|Normal mapped barrel| Textured cubes and Blender Suzanne|
+|--|--|
+|![img7](.github/6.png)|![img8](.github/8.png)|
+
+|Diablo model with normal mapping| Diablo model without normal mapping|
+|--|--|
+|![img9](.github/diablo_nm.png)|![img10](.github/diablo.png)|
 
 ## Implemented Features
 - Real-time rendering

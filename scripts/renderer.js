@@ -241,7 +241,7 @@ export class Renderer extends Bitmap
         {
             if (this.normalMap != undefined)
             {
-                this.tbn = this.tbn.fromAxis(v0.tangent, v0.biTangent, v0.normal.add(v1.normal).add(v2.normal).normalized());
+                // this.tbn = this.tbn.fromAxis(v0.tangent, v0.biTangent, v0.normal.add(v1.normal).add(v2.normal).normalized());
             }
         }
         // Vertex Shader + Geometry Shader End
@@ -376,9 +376,16 @@ export class Renderer extends Bitmap
                     const pixelPos = vp0.pos.mul(w0).add(vp1.pos.mul(w1)).add(vp2.pos.mul(w2)).mulXYZ(1, 1, -1);
                     // let c = Util.lerp3AttributeVec3(v0.color, v1.color, v2.color, w0, w1, w2, z0, z1, z2, z);
 
-                    let pixelNormal = undefined;
+                    let pixelNormal = Util.lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
+
                     if (this.normalMap != undefined && !this.checkFlag(DISABLE_NORMAL_MAPPING))
                     {
+                        // let pixelTangent = Util.lerp3AttributeVec3(vp0.tangent, vp1.tangent, vp2.tangent, w0, w1, w2, z0, z1, z2, z);
+                        // let pixelBiTangent = Util.lerp3AttributeVec3(vp0.biTangent, vp1.biTangent, vp2.biTangent, w0, w1, w2, z0, z1, z2, z);
+
+                        // Build orthonormal basis
+                        this.tbn = this.tbn.fromAxis(vp0.tangent, vp0.biTangent, pixelNormal);
+
                         let sampledNormal = Util.sample(this.normalMap, uv.x, uv.y);
                         sampledNormal = Util.convertColorToVectorRange2(sampledNormal).normalized();
 
@@ -389,10 +396,6 @@ export class Renderer extends Bitmap
 
                         sampledNormal = this.tbn.mulVector(sampledNormal, 0);
                         pixelNormal = sampledNormal.normalized();
-                    }
-                    else
-                    {
-                        pixelNormal = Util.lerp3AttributeVec3(vp0.normal, vp1.normal, vp2.normal, w0, w1, w2, z0, z1, z2, z);
                     }
 
                     if (this.difuseMap == undefined)

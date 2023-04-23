@@ -99,7 +99,13 @@ export function lerpVector3(a, b, c, w0, w1, w2)
     return new Vec3(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y, wa.z + wb.z + wc.z);
 }
 
-export function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
+// Perspective-correct vertex attribute interpolation (Vec3, Vec3)
+export function lerp2AttributeVec3(
+    a, b,   // vertex attributes to interpolate
+    w0, w1, // barycentric weights for a and b, respectively
+    z0, z1, // z values of a and b, respectively
+    z       // z value of the current fragment
+)
 {
     const wa = a.mul(w0 / z0 * z);
     const wb = b.mul(w1 / z1 * z);
@@ -107,7 +113,13 @@ export function lerp2AttributeVec3(a, b, w0, w1, z0, z1, z)
     return new Vec3(wa.x + wb.x, wa.y + wb.y, wa.z + wb.z);
 }
 
-export function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
+// Perspective-correct vertex attribute interpolation (Vec2, Vec2, Vec2)
+export function lerp3AttributeVec2(
+    a, b, c,    // vertex attributes to interpolate
+    w0, w1, w2, // barycentric weights for a, b and c, respectively
+    z0, z1, z2, // z values of a, b and c, respectively
+    z           // z value of the current fragment
+)
 {
     const wa = a.mul(w0 / z0 * z);
     const wb = b.mul(w1 / z1 * z);
@@ -116,7 +128,13 @@ export function lerp3AttributeVec2(a, b, c, w0, w1, w2, z0, z1, z2, z)
     return new Vec2(wa.x + wb.x + wc.x, wa.y + wb.y + wc.y);
 }
 
-export function lerp3AttributeVec3(a, b, c, w0, w1, w2, z0, z1, z2, z)
+// Perspective-correct vertex attribute interpolation (Vec3, Vec3, Vec3)
+export function lerp3AttributeVec3(
+    a, b, c,    // vertex attributes to interpolate
+    w0, w1, w2, // barycentric weights for a, b and c, respectively
+    z0, z1, z2, // z values of a, b and c, respectively
+    z           // z value of the current fragment
+)
 {
     const wa = a.mul(w0 / z0 * z);
     const wb = b.mul(w1 / z1 * z);

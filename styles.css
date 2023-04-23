@@ -15,19 +15,19 @@ canvas {
 }
 
 .head {
-    width: 800px;
+    width: 960px;
     /* margin-bottom: -30px; */
 }
 
 .body {
     display: flex;
-    width: 800px;
+    width: 960px;
 }
 
 .resbox {
     margin-left: 4px;
     display: flex;
-    width: 800px;
+    width: 960px;
     flex-direction: column;
 }
 

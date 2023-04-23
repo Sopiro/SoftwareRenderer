@@ -17,7 +17,7 @@ export const RENDER_TANGENT_SPACE = 1 << 5;
 export const FLIP_NORMALMAP_Y = 1 << 6;
 export const DISABLE_NORMAL_MAPPING = 1 << 7;
 
-const NORMAL_LENGTH = 0.1;
+const DEBUG_NORMAL_LENGTH = 0.1;
 
 export class Renderer extends Bitmap
 {
@@ -58,6 +58,7 @@ export class Renderer extends Bitmap
         }
     }
 
+    // Expect the input vertex to be in the world space
     drawPoint(v)
     {
         v = this.viewTransform(v);
@@ -73,6 +74,7 @@ export class Renderer extends Bitmap
         this.renderPixel(new Vec3(sx, sy, v.pos.z), v.color);
     }
 
+    // Expect the input vertices to be in the world space
     drawLine(v0, v1)
     {
         v0 = this.viewTransform(v0);
@@ -100,10 +102,16 @@ export class Renderer extends Bitmap
             v1.color = Util.lerpVector2(v1.color, v0.color, per);
         }
 
-        // Transform a vertices in camera space to viewport space at one time (Avoid heavy matrix multiplication)
+        // Transform a vertices in camera space to viewport space at one time (Avoid matrix multiplication)
         // Projection transform + viewport transform
-        let p0 = new Vec2(v0.pos.x / v0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v0.pos.y / v0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        let p1 = new Vec2(v1.pos.x / v1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, v1.pos.y / v1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        let p0 = new Vec2(
+            v0.pos.x / v0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
+            v0.pos.y / v0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+        );
+        let p1 = new Vec2(
+            v1.pos.x / v1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
+            v1.pos.y / v1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+        );
 
         // Render left to right
         if (p1.x < p0.x)
@@ -206,6 +214,7 @@ export class Renderer extends Bitmap
             v2.normal = normal;
         }
 
+        // Transform vertices from local space to world space
         v0 = this.modelTransform(v0);
         v1 = this.modelTransform(v1);
         v2 = this.modelTransform(v2);
@@ -214,23 +223,23 @@ export class Renderer extends Bitmap
         if (this.checkFlag(RENDER_FACE_NORMAL) && !this.checkFlag(RENDER_TANGENT_SPACE))
         {
             const center = v0.pos.add(v1.pos.add(v2.pos)).div(3.0);
-            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.add(v1.normal).add(v2.normal).normalized().mul(NORMAL_LENGTH)), 0xff00ff));
+            this.drawLine(new Vertex(center, 0xffffff), new Vertex(center.add(v0.normal.add(v1.normal).add(v2.normal).normalized().mul(DEBUG_NORMAL_LENGTH)), 0xff00ff));
         }
 
         // Render Vertex normal
         if (this.checkFlag(RENDER_VERTEX_NORMAL))
         {
             const pos = v0.pos;
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(NORMAL_LENGTH)), 0x0000ff));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(DEBUG_NORMAL_LENGTH)), 0x0000ff));
         }
 
         // Render Tangent space
         if (this.checkFlag(RENDER_TANGENT_SPACE) && v0.tangent != undefined)
         {
             const pos = v0.pos.add(v1.pos).add(v2.pos).div(3);
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(NORMAL_LENGTH)), 0xff0000));
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(NORMAL_LENGTH)), 0x00ff00));
-            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(NORMAL_LENGTH)), 0x0000ff));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.tangent.mul(DEBUG_NORMAL_LENGTH)), 0xff0000));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.biTangent.mul(DEBUG_NORMAL_LENGTH)), 0x00ff00));
+            this.drawLine(new Vertex(pos, 0xffffff), new Vertex(pos.add(v0.normal.mul(DEBUG_NORMAL_LENGTH)), 0x0000ff));
         }
 
         v0 = this.viewTransform(v0);
@@ -287,7 +296,7 @@ export class Renderer extends Bitmap
                     drawVertices.push(cv);
                 }
 
-                drawVertices.push(new Vertex(clippedPos, clippedCol, clippedTxC, cv.normal));
+                drawVertices.push(new Vertex(clippedPos, clippedCol, clippedTxC, cv.normal, cv.tangent, cv.biTangent));
             }
             else
             {
@@ -314,11 +323,20 @@ export class Renderer extends Bitmap
         const z1 = vp1.pos.z;
         const z2 = vp2.pos.z;
 
-        // Transform a vertices in camera space to viewport space at one time (Avoid heavy matrix multiplication)
+        // Transform a vertices in camera space to viewport space at one time (Avoid matrix multiplication)
         // Projection transform + viewport transform
-        const p0 = new Vec2(vp0.pos.x / vp0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp0.pos.y / vp0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        const p1 = new Vec2(vp1.pos.x / vp1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp1.pos.y / vp1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
-        const p2 = new Vec2(vp2.pos.x / vp2.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5, vp2.pos.y / vp2.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5);
+        const p0 = new Vec2(
+            vp0.pos.x / vp0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
+            vp0.pos.y / vp0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+        );
+        const p1 = new Vec2(
+            vp1.pos.x / vp1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
+            vp1.pos.y / vp1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+        );
+        const p2 = new Vec2(
+            vp2.pos.x / vp2.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
+            vp2.pos.y / vp2.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+        );
 
         let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
         let maxX = Math.ceil(Math.max(p0.x, p1.x, p2.x));
@@ -368,7 +386,7 @@ export class Renderer extends Bitmap
 
                 // Z value of current fragment(pixel)
                 const z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
-                let color = 0;
+                let color = new Vec3(0.0, 0.0, 0.0);
 
                 // Fragment(Pixel) Shader Begin
                 {

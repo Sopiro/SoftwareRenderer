@@ -1,11 +1,12 @@
-# Javascript Software Renderer
+# Software Renderer
 
-This is a 3D Software renderer implemented on HTML canvas using vanilla javascript. No WebGL, No external library used!
+This is a 3D Software renderer implemented in HTML canvas using vanilla javascript.  
+No WebGL, No external library used!
 
+Live Demo: https://sopiro.github.io/SoftwareRenderer/  
 Video: https://youtu.be/EGpyw_Su2r0  
-Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
-## Example
+## Examples
 
 |Post processing effects|Normal mapping|
 |--|--|

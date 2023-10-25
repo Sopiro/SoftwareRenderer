@@ -1,14 +1,13 @@
 # Javascript Software Renderer
 
-3D Software renderer implemented in HTML canvas.  
-This program is written in vanilla javascript. No WebGL, No external library used.
+This is a 3D Software renderer implemented on HTML canvas using vanilla javascript. No WebGL, No external library used!
 
 Video: https://youtu.be/EGpyw_Su2r0  
 Live Demo: https://sopiro.github.io/SoftwareRenderer/
 
 ## Example
 
-|Post processing|Normal mapping|
+|Post processing effects|Normal mapping|
 |--|--|
 |![img1](.github/c5ba1f7.gif)|![img2](.github/0b3e605.gif)|
 
@@ -28,25 +27,22 @@ Live Demo: https://sopiro.github.io/SoftwareRenderer/
 |--|--|
 |![img9](.github/diablo_nm.png)|![img10](.github/diablo.png)|
 
-## Implemented Features
-- Real-time rendering
+## Features
 - Point and line rendering
 - Triangle rasterization
-  - A Parallel Algorithm for Polygon Rasterization. Juan Pineda. Siggraph 1988.
-  - [Explained](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage)
-- Indexed vertex rendering
-- Depth buffering
-- Clipping for z-near plane
-- Perspective projection, viewport transform
-- Back face culling
+  - [Paper](https://dl.acm.org/doi/10.1145/54852.378457) [Scratchapixel](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage)
 - Perspective-correct vertex attribute interpolation
+- Depth buffering
+- Clipping for near plane
+- Back face culling
+- Indexed mesh rendering
 - Texture mapping
-- Skybox
 - OBJ model loading
   - Calculating face normal and tangent vectors
-- Vertex, Fragment(Pixel) shading
+- Vertex and fragment shading
+- Perspective projection, viewport transform
 - Phong shading model
   - Directional light
 - Normal mapping
-- Resolution changer
 - Post-processing stage
+- Skybox

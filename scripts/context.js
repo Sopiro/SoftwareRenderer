@@ -1,5 +1,6 @@
 import * as Resources from "./resources.js";
 
+// Application context
 export let Context = {}
 
 Context.PAUSE = false;

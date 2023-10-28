@@ -27,7 +27,6 @@ export class Bitmap
                 }
 
                 const color = other.pixels[x + y * other.width];
-
                 this.pixels[xx + yy * this.width] = color;
             }
         }

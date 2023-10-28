@@ -6,6 +6,7 @@ export class Camera
     {
         this.pos = new Vec3();
         this.rot = new Vec3(); // Euler rotation
+
         this.cameraTransform = new Mat4();
     }
 }

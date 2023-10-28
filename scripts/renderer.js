@@ -7,7 +7,6 @@ import { Context } from "./context.js";
 import { DirectionalLight } from "./light.js";
 
 // Render flags
-export const RENDER_CW = 0;
 export const RENDER_CCW = 1 << 0;
 export const RENDER_BACKGROUND = 1 << 1;
 export const RENDER_FACE_NORMAL = 1 << 2;
@@ -39,7 +38,7 @@ export class Renderer extends Bitmap
             this.ambient = 0.25;
             this.specularIntensity = 1000;
 
-            this.transform = new Mat4();
+            this.transform = new Mat4(); // Model transform
             this.diffuseMap = Resources.textures.sample0;
             this.normalMap = Resources.textures.default_normal;
 
@@ -47,7 +46,7 @@ export class Renderer extends Bitmap
             this.tbn = new Mat4();
         }
 
-        this.defaultRenderFlag = RENDER_CW | CALC_LIGHT;
+        this.defaultRenderFlag = CALC_LIGHT;
         this.renderFlag = 0;
     }
 
@@ -190,11 +189,6 @@ export class Renderer extends Bitmap
                 this.renderPixel(new Vec3(Util.int(x), Util.int(y), z), c);
             }
         }
-    }
-
-    drawFace(f)
-    {
-        this.drawTriangle(f.v0, f.v1, f.v2);
     }
 
     // Expect the input vertices to be in the local space
@@ -457,6 +451,8 @@ export class Renderer extends Bitmap
 
     drawMesh(mesh, flag)
     {
+        this.renderFlag = this.defaultRenderFlag;
+
         if (flag == undefined)
         {
             this.renderFlag |= RENDER_CCW;
@@ -468,10 +464,9 @@ export class Renderer extends Bitmap
 
         for (let i = 0; i < mesh.faces.length; ++i)
         {
-            this.drawFace(mesh.faces[i]);
+            let f = mesh.faces[i];
+            this.drawTriangle(f.v0, f.v1, f.v2);
         }
-
-        this.renderFlag = this.defaultRenderFlag;
     }
 
     // Local space -> World space

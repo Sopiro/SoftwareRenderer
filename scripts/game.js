@@ -172,7 +172,8 @@ export class Game
 
     drawSkyBox(rotation)
     {
-        this.renderer.renderFlag = RENDER_BACKGROUND | !CALC_LIGHT;
+        this.renderer.renderFlag = RENDER_BACKGROUND;
+        this.renderer.renderFlag &= ~CALC_LIGHT;
 
         let size = new Vec3(1000.0, 1000.0, 1000.0);
         let pos = this.camera.pos.sub(new Vec3(size.x / 2.0, size.y / 2.0, -size.z / 2.0));

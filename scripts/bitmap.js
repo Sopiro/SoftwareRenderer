@@ -33,11 +33,11 @@ export class Bitmap
         }
     }
 
-    clear(color)
+    clear(clearColor)
     {
         for (let i = 0; i < this.pixels.length; ++i)
         {
-            this.pixels[i] = color;
+            this.pixels[i] = clearColor;
         }
     }
 }

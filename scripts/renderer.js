@@ -32,7 +32,9 @@ export class Renderer extends Bitmap
 
         // Shader variables
         {
-            this.sun = new DirectionalLight();
+            let intensity = 1.1;
+            let dir = new Vec3(1.0, 1.0, 0.7).normalized().mul(-1);
+            this.sun = new DirectionalLight(intensity, dir);
 
             this.ambient = 0.25;
             this.specularIntensity = 1000;
@@ -386,7 +388,7 @@ export class Renderer extends Bitmap
 
                 // Z value of current fragment(pixel)
                 const z = 1.0 / (w0 / z0 + w1 / z1 + w2 / z2);
-                let color = new Vec3(0.0, 0.0, 0.0);
+                let color = 0;
 
                 // Fragment(Pixel) Shader Begin
                 {

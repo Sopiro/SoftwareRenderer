@@ -280,7 +280,7 @@ export class Engine
         {
             if (Context.SCALE > 1)
             {
-                // Resize the imagedata using off-screen rendering
+                // Resize the imagedata through off-screen rendering
                 this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
                 this.gfx.save();
                 this.gfx.imageSmoothingEnabled = false;

@@ -209,8 +209,8 @@ export function createTransformMatrix(pos, rot, scale)
 
 export function sample(texture, u, v)
 {
-    let tx = Math.floor(texture.width * u);
-    let ty = Math.floor(texture.height * (1.0 - v));
+    let tx = Math.floor(texture.width * u + 0.5);
+    let ty = Math.floor(texture.height * (1.0 - v) + 0.5);
 
     // Clamp method
     if (tx < 0) tx = 0;

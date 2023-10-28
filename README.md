@@ -31,19 +31,19 @@ Video: https://youtu.be/EGpyw_Su2r0
 ## Features
 - Point and line rendering
 - Triangle rasterization
+  - Perspective-correct vertex attribute interpolation
   - [Paper](https://dl.acm.org/doi/10.1145/54852.378457) [Scratchapixel](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage)
-- Perspective-correct vertex attribute interpolation
 - Depth buffering
 - Clipping for near plane
 - Back face culling
 - Indexed mesh rendering
 - Texture mapping
 - OBJ model loading
-  - Calculating face normal and tangent vectors
+  - Calculate face normal and tangent vectors
 - Vertex and fragment shading
 - Perspective projection, viewport transform
 - Phong shading model
   - Directional light
 - Normal mapping
-- Post-processing stage
-- Skybox
+- Post-processing effects
+- Skybox rendering

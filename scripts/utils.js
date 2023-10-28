@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Mat4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
-import { Constants } from "./context.js";
+import { Context } from "./context.js";
 
 export function convertImageDataToBitmap(imageData, width, height)
 {
@@ -42,7 +42,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                 res.data[ptr] = r;
                 res.data[ptr + 1] = g;
                 res.data[ptr + 2] = b;
-                res.data[ptr + 3] = Constants.GLOBAL_ALPHA;
+                res.data[ptr + 3] = Context.GLOBAL_ALPHA;
                 continue;
             }
 
@@ -55,7 +55,7 @@ export function convertBitmapToImageData(bitmap, scale = 1)
                     res.data[ptr] = r;
                     res.data[ptr + 1] = g;
                     res.data[ptr + 2] = b;
-                    res.data[ptr + 3] = Constants.GLOBAL_ALPHA;
+                    res.data[ptr + 3] = Context.GLOBAL_ALPHA;
                 }
             }
         }

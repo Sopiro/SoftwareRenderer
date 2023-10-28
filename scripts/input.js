@@ -1,4 +1,4 @@
-import { Constants } from "./context.js";
+import { Context } from "./context.js";
 import { Vec2 } from "./math.js";
 
 const last_keys = {};
@@ -29,7 +29,7 @@ export function init(engine)
     }, false);
     window.addEventListener("keydown", (e) =>
     {
-        if (e.key == "Escape") Constants.PAUSE = !Constants.PAUSE;
+        if (e.key == "Escape") Context.PAUSE = !Context.PAUSE;
 
         curr_keys[e.key] = true;
     });
@@ -41,7 +41,7 @@ export function init(engine)
     {
         let rect = engine.cvs.getBoundingClientRect();
         mousePosition.x = e.clientX - rect.left;
-        mousePosition.y = Constants.HEIGHT - (e.clientY - rect.top);
+        mousePosition.y = Context.HEIGHT - (e.clientY - rect.top);
     });
     engine.cvs.addEventListener("wheel", (e) =>
     {

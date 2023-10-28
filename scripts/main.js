@@ -2,7 +2,7 @@
 
 import { Model } from "./model.js";
 import * as Resources from "./resources.js";
-import { Constants } from "./context.js";
+import { Context } from "./context.js";
 import { Engine } from "./engine.js";
 
 window.onload = () =>
@@ -74,7 +74,7 @@ for (const key in Resources.models)
                 }
 
                 // console.log(indices);
-                ++Constants.LOADED_RESOURCES;
+                ++Context.LOADED_RESOURCES;
 
                 Resources.models[key] = new Model(positions, texCoords, normals, indices);
             }

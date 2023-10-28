@@ -3,7 +3,7 @@ import { Bitmap } from "./bitmap.js";
 import { Renderer } from "./renderer.js";
 import * as Util from "./utils.js";
 import * as Resources from "./resources.js";
-import { Constants } from "./context.js";
+import { Context } from "./context.js";
 import * as Input from "./input.js";
 import { Game } from "./game.js";
 import { postProcess } from "./postprocess.js";
@@ -75,30 +75,30 @@ export class Engine
 
         function reloadView(index)
         {
-            if (index == Constants.SCALE_INDEX)
+            if (index == Context.SCALE_INDEX)
             {
                 return;
             }
-            Constants.SCALE_INDEX = index;
+            Context.SCALE_INDEX = index;
 
-            const newWidth = Constants.WIDTH * Constants.SCALE / Constants.SCALES[Constants.SCALE_INDEX];
-            const newHeight = Constants.HEIGHT * Constants.SCALE / Constants.SCALES[Constants.SCALE_INDEX];
+            const newWidth = Context.WIDTH * Context.SCALE / Context.SCALES[Context.SCALE_INDEX];
+            const newHeight = Context.HEIGHT * Context.SCALE / Context.SCALES[Context.SCALE_INDEX];
             this.renderer = new Renderer(newWidth, newHeight, this.camera);
             this.game.renderer = this.renderer;
 
-            Constants.WIDTH = newWidth;
-            Constants.HEIGHT = newHeight;
-            Constants.SCALE = Constants.SCALES[Constants.SCALE_INDEX];
-            Constants.FOV = Constants.HEIGHT;
+            Context.WIDTH = newWidth;
+            Context.HEIGHT = newHeight;
+            Context.SCALE = Context.SCALES[Context.SCALE_INDEX];
+            Context.FOV = Context.HEIGHT;
 
-            this.tmpCvs.width = Constants.WIDTH;
-            this.tmpCvs.height = Constants.HEIGHT;
+            this.tmpCvs.width = Context.WIDTH;
+            this.tmpCvs.height = Context.HEIGHT;
 
             for (const btn of this.resBtns) 
             {
                 btn.style.backgroundColor = "white";
             }
-            this.resBtns[Constants.SCALE_INDEX].style.backgroundColor = "black";
+            this.resBtns[Context.SCALE_INDEX].style.backgroundColor = "black";
         }
 
         for (let i = 0; i < this.resBtns.length; ++i)
@@ -107,7 +107,7 @@ export class Engine
             btn.onclick = () => reloadView.bind(this)(i);
         }
 
-        this.resBtns[Constants.SCALE_INDEX].style.backgroundColor = "black";
+        this.resBtns[Context.SCALE_INDEX].style.backgroundColor = "black";
 
         this.pspBtns.push(document.getElementById("psp1"));
         this.pspBtns.push(document.getElementById("psp2"));
@@ -168,7 +168,7 @@ export class Engine
                         Resources.textures["skybox_back"] = Util.convertImageDataToBitmap(back, size, size);
                         Resources.textures["skybox_right"] = Util.convertImageDataToBitmap(right, size, size);
                         Resources.textures["skybox_left"] = Util.convertImageDataToBitmap(left, size, size);
-                        Constants.LOADED_RESOURCES++;
+                        Context.LOADED_RESOURCES++;
 
                         return;
                     }
@@ -177,18 +177,18 @@ export class Engine
                     image = Util.convertImageDataToBitmap(image, imageWidth, imageHeight);
 
                     Resources.textures[key] = image;
-                    Constants.LOADED_RESOURCES++;
+                    Context.LOADED_RESOURCES++;
                 }
             }
         }
 
         this.frameCounterElement = document.getElementById("frame_counter");
 
-        Constants.WIDTH = Constants.WIDTH / Constants.SCALE;
-        Constants.HEIGHT = Constants.HEIGHT / Constants.SCALE;
+        Context.WIDTH = Context.WIDTH / Context.SCALE;
+        Context.HEIGHT = Context.HEIGHT / Context.SCALE;
 
         this.camera = new Camera();
-        this.renderer = new Renderer(Constants.WIDTH, Constants.HEIGHT, this.camera);
+        this.renderer = new Renderer(Context.WIDTH, Context.HEIGHT, this.camera);
         this.game = new Game(this.renderer, this.camera);
 
         let sample = new Bitmap(64, 64);
@@ -234,29 +234,29 @@ export class Engine
         this.fps = this.times.length;
         this.frameCounterElement.innerHTML = this.fps + "fps";
 
-        if (!this.started && Constants.LOADED_RESOURCES == Constants.RESOURCE_READY)
+        if (!this.started && Context.LOADED_RESOURCES == Context.RESOURCE_READY)
         {
             this.started = true;
-            this.cvs.setAttribute("width", Constants.WIDTH * Constants.SCALE + "px");
-            this.cvs.setAttribute("height", Constants.HEIGHT * Constants.SCALE + "px");
-            this.tmpCvs.setAttribute("width", Constants.WIDTH * Constants.SCALE + "px");
-            this.tmpCvs.setAttribute("height", Constants.HEIGHT * Constants.SCALE + "px");
+            this.cvs.setAttribute("width", Context.WIDTH * Context.SCALE + "px");
+            this.cvs.setAttribute("height", Context.HEIGHT * Context.SCALE + "px");
+            this.tmpCvs.setAttribute("width", Context.WIDTH * Context.SCALE + "px");
+            this.tmpCvs.setAttribute("height", Context.HEIGHT * Context.SCALE + "px");
             this.gfx.font = "48px verdana";
         }
 
         if (!this.started)
         {
             this.gfx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-            this.gfx.fillText("Loading..." + Util.int(Constants.LOADED_RESOURCES / Constants.RESOURCE_READY * 100) + "%", 10, 60);
+            this.gfx.fillText("Loading..." + Util.int(Context.LOADED_RESOURCES / Context.RESOURCE_READY * 100) + "%", 10, 60);
         }
 
-        if (this.started && !Constants.PAUSE)
+        if (this.started && !Context.PAUSE)
         {
             this.update(delta);
             this.render();
             this.time += delta;
         }
-        else if (Constants.PAUSE)
+        else if (Context.PAUSE)
         {
             this.gfx.fillText("PAUSE", 4, 40);
         }
@@ -278,13 +278,13 @@ export class Engine
 
         if (true)
         {
-            if (Constants.SCALE > 1)
+            if (Context.SCALE > 1)
             {
                 // Resize the imagedata using off-screen rendering
                 this.tmpGfx.putImageData(Util.convertBitmapToImageData(this.renderer), 0, 0);
                 this.gfx.save();
                 this.gfx.imageSmoothingEnabled = false;
-                this.gfx.scale(Constants.SCALE, Constants.SCALE);
+                this.gfx.scale(Context.SCALE, Context.SCALE);
                 this.gfx.drawImage(this.tmpCvs, 0, 0);
                 this.gfx.restore();
             }
@@ -294,7 +294,7 @@ export class Engine
             }
         } else
         {
-            this.gfx.putImageData(Util.convertBitmapToImageData(this.renderer, Constants.SCALE), 0, 0)
+            this.gfx.putImageData(Util.convertBitmapToImageData(this.renderer, Context.SCALE), 0, 0)
         }
     }
 }

@@ -3,7 +3,7 @@ import { Bitmap } from "./bitmap.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
 import * as Util from "./utils.js";
-import { Constants } from "./context.js";
+import { Context } from "./context.js";
 import { DirectionalLight } from "./light.js";
 
 // Render flags
@@ -68,8 +68,8 @@ export class Renderer extends Bitmap
             return;
         }
 
-        const sx = Util.int((v.pos.x / v.pos.z * Constants.FOV + Constants.WIDTH / 2.0));
-        const sy = Util.int((v.pos.y / v.pos.z * Constants.FOV + Constants.HEIGHT / 2.0));
+        const sx = Util.int((v.pos.x / v.pos.z * Context.FOV + Context.WIDTH / 2.0));
+        const sy = Util.int((v.pos.y / v.pos.z * Context.FOV + Context.HEIGHT / 2.0));
 
         this.renderPixel(new Vec3(sx, sy, v.pos.z), v.color);
     }
@@ -105,12 +105,12 @@ export class Renderer extends Bitmap
         // Transform a vertices in camera space to viewport space at one time (Avoid matrix multiplication)
         // Projection transform + viewport transform
         let p0 = new Vec2(
-            v0.pos.x / v0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
-            v0.pos.y / v0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+            v0.pos.x / v0.pos.z * Context.FOV + Context.WIDTH / 2.0 - 0.5,
+            v0.pos.y / v0.pos.z * Context.FOV + Context.HEIGHT / 2.0 - 0.5
         );
         let p1 = new Vec2(
-            v1.pos.x / v1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
-            v1.pos.y / v1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+            v1.pos.x / v1.pos.z * Context.FOV + Context.WIDTH / 2.0 - 0.5,
+            v1.pos.y / v1.pos.z * Context.FOV + Context.HEIGHT / 2.0 - 0.5
         );
 
         // Render left to right
@@ -131,9 +131,9 @@ export class Renderer extends Bitmap
         let y1 = Math.ceil(p1.y);
 
         if (x0 < 0) x0 = 0;
-        if (x1 > Constants.WIDTH) x1 = Constants.WIDTH;
+        if (x1 > Context.WIDTH) x1 = Context.WIDTH;
         if (y0 < 0) y0 = 0;
-        if (y1 > Constants.HEIGHT) y1 = Constants.HEIGHT;
+        if (y1 > Context.HEIGHT) y1 = Context.HEIGHT;
 
         let dx = p1.x - p0.x;
         let dy = p1.y - p0.y;
@@ -173,9 +173,9 @@ export class Renderer extends Bitmap
             y1 = Math.ceil(p1.y);
 
             if (x0 < 0) x0 = 0;
-            if (x1 > Constants.WIDTH) x1 = Constants.WIDTH;
+            if (x1 > Context.WIDTH) x1 = Context.WIDTH;
             if (y0 < 0) y0 = 0;
-            if (y1 > Constants.HEIGHT) y1 = Constants.HEIGHT;
+            if (y1 > Context.HEIGHT) y1 = Context.HEIGHT;
 
             for (let y = y0; y < y1; ++y)
             {
@@ -326,16 +326,16 @@ export class Renderer extends Bitmap
         // Transform a vertices in camera space to viewport space at one time (Avoid matrix multiplication)
         // Projection transform + viewport transform
         const p0 = new Vec2(
-            vp0.pos.x / vp0.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
-            vp0.pos.y / vp0.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+            vp0.pos.x / vp0.pos.z * Context.FOV + Context.WIDTH / 2.0 - 0.5,
+            vp0.pos.y / vp0.pos.z * Context.FOV + Context.HEIGHT / 2.0 - 0.5
         );
         const p1 = new Vec2(
-            vp1.pos.x / vp1.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
-            vp1.pos.y / vp1.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+            vp1.pos.x / vp1.pos.z * Context.FOV + Context.WIDTH / 2.0 - 0.5,
+            vp1.pos.y / vp1.pos.z * Context.FOV + Context.HEIGHT / 2.0 - 0.5
         );
         const p2 = new Vec2(
-            vp2.pos.x / vp2.pos.z * Constants.FOV + Constants.WIDTH / 2.0 - 0.5,
-            vp2.pos.y / vp2.pos.z * Constants.FOV + Constants.HEIGHT / 2.0 - 0.5
+            vp2.pos.x / vp2.pos.z * Context.FOV + Context.WIDTH / 2.0 - 0.5,
+            vp2.pos.y / vp2.pos.z * Context.FOV + Context.HEIGHT / 2.0 - 0.5
         );
 
         let minX = Math.ceil(Math.min(p0.x, p1.x, p2.x));
@@ -345,8 +345,8 @@ export class Renderer extends Bitmap
 
         if (minX < 0) minX = 0;
         if (minY < 0) minY = 0;
-        if (maxX > Constants.WIDTH) maxX = Constants.WIDTH;
-        if (maxY > Constants.HEIGHT) maxY = Constants.HEIGHT;
+        if (maxX > Context.WIDTH) maxX = Context.WIDTH;
+        if (maxY > Context.HEIGHT) maxY = Context.HEIGHT;
 
         const v10 = new Vec2(p1.x - p0.x, p1.y - p0.y);
         const v21 = new Vec2(p2.x - p1.x, p2.y - p1.y);
@@ -503,7 +503,7 @@ export class Renderer extends Bitmap
             c = Util.convertVectorToColorHex(c);
         }
 
-        if (p.z >= this.zBuffer[p.x + (Constants.HEIGHT - 1 - p.y) * Constants.WIDTH])
+        if (p.z >= this.zBuffer[p.x + (Context.HEIGHT - 1 - p.y) * Context.WIDTH])
         {
             return;
         }
@@ -513,8 +513,8 @@ export class Renderer extends Bitmap
             return;
         }
 
-        this.pixels[p.x + (Constants.HEIGHT - 1 - p.y) * this.width] = c;
-        this.zBuffer[p.x + (Constants.HEIGHT - 1 - p.y) * this.width] = p.z;
+        this.pixels[p.x + (Context.HEIGHT - 1 - p.y) * this.width] = c;
+        this.zBuffer[p.x + (Context.HEIGHT - 1 - p.y) * this.width] = p.z;
     }
 
     setMaterial(diffuseMap, normalMap, specularIntensity, normalMapFlipY)

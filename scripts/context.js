@@ -1,18 +1,18 @@
 import * as Resources from "./resources.js";
 
-export let Constants = {}
+export let Context = {}
 
-Constants.PAUSE = false;
+Context.PAUSE = false;
 
-Constants.WIDTH = 960;
-Constants.HEIGHT = 540;
+Context.WIDTH = 960;
+Context.HEIGHT = 540;
 
-Constants.SCALE_INDEX = 2;
-Constants.SCALES = [1, 2, 4, 6, 10, 12, 20];
-Constants.SCALE = Constants.SCALES[Constants.SCALE_INDEX];
-Constants.FOV = Constants.HEIGHT / Constants.SCALE;
+Context.SCALE_INDEX = 2;
+Context.SCALES = [1, 2, 4, 6, 10, 12, 20];
+Context.SCALE = Context.SCALES[Context.SCALE_INDEX];
+Context.FOV = Context.HEIGHT / Context.SCALE;
 
-Constants.RESOURCE_READY = Object.keys(Resources.textures).length + Object.keys(Resources.models).length;
-Constants.LOADED_RESOURCES = 0;
+Context.RESOURCE_READY = Object.keys(Resources.textures).length + Object.keys(Resources.models).length;
+Context.LOADED_RESOURCES = 0;
 
-Constants.GLOBAL_ALPHA = 255;
+Context.GLOBAL_ALPHA = 255;

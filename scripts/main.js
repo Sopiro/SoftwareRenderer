@@ -1,6 +1,6 @@
 'use strict'
 
-import { Model } from "./model.js";
+import { Model } from "./mesh.js";
 import * as Resources from "./resources.js";
 import { Context } from "./context.js";
 import { Engine } from "./engine.js";

@@ -455,7 +455,7 @@ export class Renderer extends Bitmap
         }
     }
 
-    drawModel(model, flag)
+    drawMesh(mesh, flag)
     {
         if (flag == undefined)
         {
@@ -466,9 +466,9 @@ export class Renderer extends Bitmap
             this.renderFlag = flag;
         }
 
-        for (let i = 0; i < model.faces.length; ++i)
+        for (let i = 0; i < mesh.faces.length; ++i)
         {
-            this.drawFace(model.faces[i]);
+            this.drawFace(mesh.faces[i]);
         }
 
         this.renderFlag = this.defaultRenderFlag;

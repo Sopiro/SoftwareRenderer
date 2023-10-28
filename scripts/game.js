@@ -103,44 +103,44 @@ export class Game
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.white, undefined, 100.0);
-        this.renderer.drawModel(Resources.models.flat_sphere);
+        this.renderer.drawMesh(Resources.meshes.flat_sphere);
 
         // Smooth sphere
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.white, undefined, 100.0);
-        this.renderer.drawModel(Resources.models.smooth_sphere);
+        this.renderer.drawMesh(Resources.meshes.smooth_sphere);
 
         // Brick1
         this.renderer.transform = new Mat4().translate(xPos + (index * gap), -4.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.brick, Resources.textures.brick_normal, 10.0);
-        this.renderer.drawModel(Resources.models.cube);
+        this.renderer.drawMesh(Resources.meshes.cube);
 
         // Brick2
         this.renderer.transform = new Mat4().translate(xPos + (index * gap), 0.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.stone2, Resources.textures.stone2_normal, 10.0);
-        this.renderer.drawModel(Resources.models.cube);
+        this.renderer.drawMesh(Resources.meshes.cube);
 
         // Brick3
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 4.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.brickwall, Resources.textures.brickwall_normal, 10.0);
-        this.renderer.drawModel(Resources.models.cube);
+        this.renderer.drawMesh(Resources.meshes.cube);
 
         // Barrel
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(0.3);
         this.renderer.setMaterial(Resources.textures.barrel_diffuse, Resources.textures.barrel_normal, 10.0);
-        this.renderer.drawModel(Resources.models.barrel);
+        this.renderer.drawMesh(Resources.meshes.barrel);
 
         // Diablo
         xPos += 2.0;
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos);
         this.renderer.transform = this.renderer.transform.scale(4.0);
         this.renderer.setMaterial(Resources.textures.diablo_diffuse, Resources.textures.diablo_normal, 10.0);
-        this.renderer.drawModel(Resources.models.diablo);
+        this.renderer.drawMesh(Resources.meshes.diablo);
         xPos += 2.0;
 
         let r = this.time / 2.0;
@@ -149,19 +149,19 @@ export class Game
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(0.0, r, r);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.pepe, undefined, 30.0);
-        this.renderer.drawModel(Resources.models.cube);
+        this.renderer.drawMesh(Resources.meshes.cube);
 
         // Cube2
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(r, r, 0.0);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.dulri, undefined, 30.0);
-        this.renderer.drawModel(Resources.models.cube);
+        this.renderer.drawMesh(Resources.meshes.cube);
 
         // Blender monkey
         this.renderer.transform = new Mat4().translate(xPos + (index++ * gap), 0.0, zPos).rotate(0.0, -r, r);
         this.renderer.transform = this.renderer.transform.scale(1);
         this.renderer.setMaterial(Resources.textures.white, undefined, 30.0);
-        this.renderer.drawModel(Resources.models.monkey);
+        this.renderer.drawMesh(Resources.meshes.monkey);
 
         // Skybox
         if (this.renderSkybox)

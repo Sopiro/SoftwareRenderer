@@ -20,7 +20,7 @@ let textures =
     "barrel_normal": ["./imgs/barrel_normal.png", [1024, 1024]],
 };
 
-let models =
+let meshes =
 {
     "cube": "./models/cube.obj",
     "smooth_sphere": "./models/sphere.obj",
@@ -31,4 +31,4 @@ let models =
     "barrel": "./models/barrel.obj",
 };
 
-export { models, textures };
+export { meshes, textures };

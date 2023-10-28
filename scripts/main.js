@@ -1,6 +1,6 @@
 'use strict'
 
-import { Model } from "./mesh.js";
+import { Mesh } from "./mesh.js";
 import * as Resources from "./resources.js";
 import { Context } from "./context.js";
 import { Engine } from "./engine.js";
@@ -11,11 +11,11 @@ window.onload = () =>
 }
 
 // Load models, parse OBJ
-for (const key in Resources.models)
+for (const key in Resources.meshes)
 {
-    if (Object.hasOwnProperty.call(Resources.models, key))
+    if (Object.hasOwnProperty.call(Resources.meshes, key))
     {
-        const modelURL = Resources.models[key];
+        const modelURL = Resources.meshes[key];
 
         let xhr = new XMLHttpRequest();
         xhr.open("get", modelURL, true);
@@ -76,7 +76,7 @@ for (const key in Resources.models)
                 // console.log(indices);
                 ++Context.LOADED_RESOURCES;
 
-                Resources.models[key] = new Model(positions, texCoords, normals, indices);
+                Resources.meshes[key] = new Mesh(positions, texCoords, normals, indices);
             }
         }
     }

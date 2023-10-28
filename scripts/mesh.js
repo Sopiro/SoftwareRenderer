@@ -2,13 +2,13 @@ import { Face } from "./face.js";
 import { Vec2, Vec3 } from "./math.js";
 import { Vertex } from "./vertex.js";
 
-export class Model
+export class Mesh
 {
-    constructor(vPositions, vTexCoords, vNormals, indices)
+    constructor(positions, texCoords, normals, indices)
     {
-        this.vPositions = vPositions;
-        this.vTexCoords = vTexCoords;
-        this.vNormals = vNormals;
+        this.positions = positions;
+        this.texCoords = texCoords;
+        this.normals = normals;
         this.indices = indices;
         this.faces = [];
 
@@ -34,16 +34,16 @@ export class Model
 
     getPosition(pos)
     {
-        return new Vec3(this.vPositions[pos][0], this.vPositions[pos][1], this.vPositions[pos][2]);
+        return new Vec3(this.positions[pos][0], this.positions[pos][1], this.positions[pos][2]);
     }
 
     getTexCoord(tex)
     {
-        return new Vec2(this.vTexCoords[tex][0], this.vTexCoords[tex][1]);
+        return new Vec2(this.texCoords[tex][0], this.texCoords[tex][1]);
     }
 
     getNormal(nor)
     {
-        return new Vec3(this.vNormals[nor][0], this.vNormals[nor][1], this.vNormals[nor][2]);
+        return new Vec3(this.normals[nor][0], this.normals[nor][1], this.normals[nor][2]);
     }
 }

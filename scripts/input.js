@@ -1,4 +1,4 @@
-import { Constants } from "./constants.js";
+import { Constants } from "./context.js";
 import { Vec2 } from "./math.js";
 
 const last_keys = {};

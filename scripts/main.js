@@ -2,7 +2,7 @@
 
 import { Model } from "./model.js";
 import * as Resources from "./resources.js";
-import { Constants } from "./constants.js";
+import { Constants } from "./context.js";
 import { Engine } from "./engine.js";
 
 window.onload = () =>

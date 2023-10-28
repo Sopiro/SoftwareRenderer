@@ -3,7 +3,7 @@ import { Bitmap } from "./bitmap.js";
 import { Renderer } from "./renderer.js";
 import * as Util from "./utils.js";
 import * as Resources from "./resources.js";
-import { Constants } from "./constants.js";
+import { Constants } from "./context.js";
 import * as Input from "./input.js";
 import { Game } from "./game.js";
 import { postProcess } from "./postprocess.js";

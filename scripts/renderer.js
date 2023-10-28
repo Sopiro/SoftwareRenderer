@@ -3,7 +3,7 @@ import { Bitmap } from "./bitmap.js";
 import { Vertex } from "./vertex.js";
 import * as Resources from "./resources.js";
 import * as Util from "./utils.js";
-import { Constants } from "./constants.js";
+import { Constants } from "./context.js";
 import { DirectionalLight } from "./light.js";
 
 // Render flags

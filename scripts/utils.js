@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Mat4 } from "./math.js";
 import { Bitmap } from "./bitmap.js";
-import { Constants } from "./constants.js";
+import { Constants } from "./context.js";
 
 export function convertImageDataToBitmap(imageData, width, height)
 {

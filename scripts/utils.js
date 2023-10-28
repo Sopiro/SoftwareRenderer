@@ -212,10 +212,12 @@ export function sample(texture, u, v)
     let tx = Math.floor(texture.width * u);
     let ty = Math.floor(texture.height * (1.0 - v));
 
+    // Clamp method
     if (tx < 0) tx = 0;
     if (tx >= texture.width) tx = texture.width - 1;
     if (ty < 0) ty = 0;
     if (ty >= texture.height) ty = texture.height - 1;
 
+    // Better use more advanced sampling method..
     return texture.pixels[tx + ty * texture.width];
 }

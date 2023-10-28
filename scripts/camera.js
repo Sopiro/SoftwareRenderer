@@ -4,8 +4,8 @@ export class Camera
 {
     constructor()
     {
-        this.pos = new Vec3(0.0, 0.0, 0.0);
-        this.rot = new Vec3(0.0, 0.0, 0.0);
+        this.pos = new Vec3();
+        this.rot = new Vec3(); // Euler rotation
         this.cameraTransform = new Mat4();
     }
 }

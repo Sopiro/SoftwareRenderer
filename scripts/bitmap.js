@@ -7,10 +7,10 @@ export class Bitmap
         this.pixels = new Uint32Array(width * height);
     }
 
-    // Render bitmap image onto this bitmap with offset
-    render(bitmap, ox, oy)
+    // Render image onto this bitmap with offset
+    render(other, ox, oy)
     {
-        for (let y = 0; y < bitmap.height; ++y)
+        for (let y = 0; y < other.height; ++y)
         {
             let yy = oy + y;
             if (yy < 0 || yy >= this.height)
@@ -18,7 +18,7 @@ export class Bitmap
                 continue;
             }
 
-            for (let x = 0; x < bitmap.width; ++x)
+            for (let x = 0; x < other.width; ++x)
             {
                 let xx = ox + x;
                 if (xx < 0 || xx >= this.width) 
@@ -26,7 +26,7 @@ export class Bitmap
                     continue;
                 }
 
-                const color = bitmap.pixels[x + y * bitmap.width];
+                const color = other.pixels[x + y * other.width];
 
                 this.pixels[xx + yy * this.width] = color;
             }

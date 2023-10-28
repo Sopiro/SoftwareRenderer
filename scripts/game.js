@@ -64,8 +64,8 @@ export class Game
         if (Input.isKeyDown("o")) this.renderer.sun.intensity *= 1 / 1.1;
 
         let matrix = new Mat4().rotate(this.renderer.sun.rotation.x, this.renderer.sun.rotation.y, this.renderer.sun.rotation.z);
-        let sunDir = matrix.mulVector(this.renderer.sun.posRelativeToZero, 0).normalized().mul(-1);
-        this.renderer.sun.dirVS = this.camera.cameraTransform.mulVector(sunDir, 0);
+        let sunDir = matrix.mulVector(this.renderer.sun.direction, 0).normalized();
+        this.renderer.sun.directionVS = this.camera.cameraTransform.mulVector(sunDir, 0);
 
         this.time += delta;
 

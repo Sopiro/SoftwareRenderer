@@ -38,10 +38,10 @@ export class Renderer extends Bitmap
             this.specularIntensity = 1000;
 
             this.transform = new Mat4();
-            this.difuseMap = Resources.textures.sample0;
+            this.diffuseMap = Resources.textures.sample0;
             this.normalMap = Resources.textures.default_normal;
 
-            // Tangent matrix
+            // Tangential matrix
             this.tbn = new Mat4();
         }
 
@@ -54,7 +54,7 @@ export class Renderer extends Bitmap
         for (let i = 0; i < this.pixels.length; ++i)
         {
             this.pixels[i] = clearColor;
-            this.zBuffer[i] = 100000.0;
+            this.zBuffer[i] = Number.MAX_SAFE_INTEGER;
         }
     }
 
@@ -416,18 +416,18 @@ export class Renderer extends Bitmap
                         pixelNormal = sampledNormal.normalized();
                     }
 
-                    if (this.difuseMap == undefined)
+                    if (this.diffuseMap == undefined)
                     {
                         color = Util.lerp3AttributeVec3(vp0.color, vp1.color, vp2.color, w0, w1, w2, z0, z1, z2, z);
                     }
                     else
                     {
-                        color = Util.sample(this.difuseMap, uv.x, uv.y);
+                        color = Util.sample(this.diffuseMap, uv.x, uv.y);
                     }
 
                     if (calcLight)
                     {
-                        const toLight = this.sun.dirVS.mul(-1).normalized();
+                        const toLight = this.sun.directionVS.mul(-1).normalized();
 
                         let diffuse = toLight.dot(pixelNormal) * this.sun.intensity;
                         diffuse = Util.clamp(diffuse, this.ambient, 1.0);
@@ -519,7 +519,7 @@ export class Renderer extends Bitmap
 
     setMaterial(diffuseMap, normalMap, specularIntensity, normalMapFlipY)
     {
-        this.difuseMap = diffuseMap;
+        this.diffuseMap = diffuseMap;
         this.normalMap = normalMap;
         this.specularIntensity = specularIntensity;
 
